@@ -103,7 +103,7 @@ def lambda_handler(event, context):
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Your YouTube API Key</title>
+        <title>Your YTSubs API Key</title>
         <style>
             body {{
                 background-color: #121212;
