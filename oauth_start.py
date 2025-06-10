@@ -42,6 +42,9 @@ def lambda_handler(event, context):
                 font-size: 2em;
                 margin-bottom: 0.2em;
             }}
+            h2 {{
+                margin-top: 2.5em;
+            }}
             p {{
                 font-size: 1.1em;
                 margin-bottom: 2em;
@@ -60,6 +63,17 @@ def lambda_handler(event, context):
             a.button:hover {{
                 background-color: #357ae8;
             }}
+            code {{
+                white-space: pre-wrap;
+                background: #1e1e1e;
+                padding: 0.5em;
+                border-radius: 5px;
+                display: block;
+                margin: 1em auto;
+                max-width: 90%;
+                overflow-x: auto;
+                text-align: left;
+            }}
         </style>
     </head>
     <body>
@@ -67,6 +81,41 @@ def lambda_handler(event, context):
         <h1>Welcome to YTSubs</h1>
         <p>A simple service to fetch and cache your YouTube subscriptions using the YouTube Data API.</p>
         <a href="{auth_url}" class="button">Sign in with Google</a>
+        <h2>Example response:</h2>
+        <p>The API response with list of the user's subscriptions as they are returned by the <a href="https://developers.google.com/youtube/v3/docs/subscriptions#resource-representation" target="_blank">YouTube API</a> with an additional 'lastRetrievalDate' parameter indicating how old the data is (updated upon a call to the API every 12 hours)</p>
+        <code>
+&#123;
+  "lastRetrievalDate": "2025-06-10T01:32:08.355395",
+  "subscriptions": [
+    &#123;
+      "kind": "youtube#subscription",
+      "etag": "mep1K4OBALF4wrTFaXIYU-_xnsU",
+      "id": "CWE0Bb1OftIKrp8FAk4EYe_MiDVd-mT-5vdiIOY_LVs",
+      "snippet": &#123;
+        "publishedAt": "2018-01-03T21:42:30.834186Z",
+        "title": "Mark Rober",
+        "description": "Former NASA engineer. Current CrunchLabs founder and friend of science...",
+        "resourceId": &#123;
+          "kind": "youtube#channel",
+          "channelId": "UCY1kMZp36IQSyNx_9h4mpCg"
+        &#125;,
+        "channelId": "UCPJHnEGx82NVaeJCYM_PFJg",
+        "thumbnails": &#123;
+          "default": &#123;
+            "url": "https://yt3.ggpht.com/ytc/AIdro_ksXY2REjZ6gYKSgnWT5jC_zT9mX900vyFtVinR8KbHww=s88-c-k-c0x00ffffff-no-rj"
+          &#125;,
+          "medium": &#123;
+            "url": "https://yt3.ggpht.com/ytc/AIdro_ksXY2REjZ6gYKSgnWT5jC_zT9mX900vyFtVinR8KbHww=s240-c-k-c0x00ffffff-no-rj"
+          &#125;,
+          "high": &#123;
+            "url": "https://yt3.ggpht.com/ytc/AIdro_ksXY2REjZ6gYKSgnWT5jC_zT9mX900vyFtVinR8KbHww=s800-c-k-c0x00ffffff-no-rj"
+          &#125;
+        &#125;
+      &#125;
+    &#125;
+  ]
+&#125;
+        </code>
     </body>
     </html>
     """

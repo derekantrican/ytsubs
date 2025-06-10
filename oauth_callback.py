@@ -144,9 +144,9 @@ def lambda_handler(event, context):
         <p>And your Google User ID is:</p>
         <code>{google_user_id}</code>
 
-        <p>You can use them together like this:</p>
+        <p>You can use them together to call the API like this:</p>
         <code>
-curl "https://ytsubs.app/subscriptions?api_key={api_key}&google_user_id={google_user_id}"
+curl https://ytsubs.app/subscriptions?api_key={api_key}&google_user_id={google_user_id}
         </code>
     </body>
     </html>
