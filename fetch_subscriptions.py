@@ -3,6 +3,7 @@ import datetime
 import urllib.request
 import urllib.parse
 import boto3
+import os
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
@@ -21,9 +22,6 @@ def lambda_handler(event, context):
 
     # Look up the user by api_key and validate google_user_id
     user = keys_table.get_item(Key={'api_key': api_key}).get('Item')
-    print(f"Query: api_key={api_key}, google_user_id={google_user_id}")
-    print(f"Fetched user: {json.dumps(user)}")
-
     if not user or user.get('google_user_id') != google_user_id:
         return {
             "statusCode": 403,
@@ -45,39 +43,74 @@ def lambda_handler(event, context):
                 })
             }
 
-    # Fetch new data from YouTube
     access_token = user.get('youtube_access_token')
+    refresh_token = user.get('youtube_refresh_token')
     if not access_token:
         return {
             "statusCode": 401,
             "body": "No YouTube token available for this user"
         }
 
-    headers = {
-        "Authorization": f"Bearer {access_token}"
-    }
-    params = {
-        "part": "snippet",
-        "mine": "true",
-        "maxResults": "50"
-    }
-    base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
-    all_subs = []
-    next_page_token = None
+    def fetch_subs(token):
+        headers = {
+            "Authorization": f"Bearer {token}"
+        }
+        params = {
+            "part": "snippet",
+            "mine": "true",
+            "maxResults": "50"
+        }
+        base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
+        all_subs = []
+        next_page_token = None
 
-    try:
         while True:
             query = params.copy()
             if next_page_token:
                 query['pageToken'] = next_page_token
             full_url = base_url + "?" + urllib.parse.urlencode(query)
             req = urllib.request.Request(full_url, headers=headers)
-            with urllib.request.urlopen(req) as response:
-                data = json.loads(response.read().decode())
-                all_subs.extend(data.get('items', []))
-                next_page_token = data.get('nextPageToken')
-                if not next_page_token:
-                    break
+            try:
+                with urllib.request.urlopen(req) as response:
+                    data = json.loads(response.read().decode())
+                    all_subs.extend(data.get('items', []))
+                    next_page_token = data.get('nextPageToken')
+                    if not next_page_token:
+                        break
+            except urllib.error.HTTPError as e:
+                if e.code == 401 and refresh_token:
+                    new_token = refresh_access_token(refresh_token)
+                    if new_token:
+                        return fetch_subs(new_token)
+                raise e
+        return all_subs
+
+    def refresh_access_token(refresh_token):
+        client_id = os.environ['GOOGLE_CLIENT_ID']
+        client_secret = os.environ['GOOGLE_CLIENT_SECRET']
+        token_url = "https://oauth2.googleapis.com/token"
+        data = urllib.parse.urlencode({
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "refresh_token": refresh_token,
+            "grant_type": "refresh_token"
+        }).encode()
+
+        req = urllib.request.Request(token_url, data=data)
+        try:
+            with urllib.request.urlopen(req) as resp:
+                token_data = json.loads(resp.read().decode())
+                new_token = token_data.get("access_token")
+                if new_token:
+                    user['youtube_access_token'] = new_token
+                    keys_table.put_item(Item=user)
+                    return new_token
+        except Exception as e:
+            print(f"Failed to refresh token: {e}")
+        return None
+
+    try:
+        all_subs = fetch_subs(access_token)
     except Exception as e:
         return {
             "statusCode": 500,
