@@ -141,10 +141,12 @@ def lambda_handler(event, context):
         <h1>Welcome, {email}</h1>
         <p>Your API key is:</p>
         <code>{api_key}</code>
+        <p>And your Google User ID is:</p>
+        <code>{google_user_id}</code>
 
-        <p>You can use it like this:</p>
+        <p>You can use them together like this:</p>
         <code>
-curl "https://atq2ry8qj0.execute-api.us-west-2.amazonaws.com/prod/subscriptions?api_key={api_key}&google_user_id={google_user_id}"
+curl "https://ytsubs.app/subscriptions?api_key={api_key}&google_user_id={google_user_id}"
         </code>
     </body>
     </html>
