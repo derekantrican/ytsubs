@@ -14,12 +14,9 @@ jobs:
     strategy:
       matrix:
         function:
-          - name: fetch_subscriptions
-            lambda: ${{ secrets.LAMBDA_FETCH_NAME }}
-          - name: oauth_start
-            lambda: ${{ secrets.LAMBDA_START_NAME }}
-          - name: oauth_callback
-            lambda: ${{ secrets.LAMBDA_CALLBACK_NAME }}
+          - fetch_subscriptions
+          - oauth_start
+          - oauth_callback
 
     steps:
       - name: Checkout code
@@ -32,11 +29,22 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Deploy ${{ matrix.function.name }}
+      - name: Determine Lambda function name
+        id: set_lambda_name
+        run: |
+          if [ "${{ matrix.function }}" = "fetch_subscriptions" ]; then
+            echo "lambda_name=${{ secrets.LAMBDA_FETCH_NAME }}" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.function }}" = "oauth_start" ]; then
+            echo "lambda_name=${{ secrets.LAMBDA_START_NAME }}" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.function }}" = "oauth_callback" ]; then
+            echo "lambda_name=${{ secrets.LAMBDA_CALLBACK_NAME }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy ${{ matrix.function }}
         run: |
           zip ${{
-            matrix.function.name }}.zip ${{
-            matrix.function.name }}.py
+            matrix.function }}.zip ${{
+            matrix.function }}.py
           aws lambda update-function-code \
-            --function-name "${{ matrix.function.lambda }}" \
-            --zip-file "fileb://${{ matrix.function.name }}.zip"
+            --function-name "${{ steps.set_lambda_name.outputs.lambda_name }}" \
+            --zip-file "fileb://${{ matrix.function }}.zip"
