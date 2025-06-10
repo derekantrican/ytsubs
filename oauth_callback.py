@@ -148,6 +148,8 @@ def lambda_handler(event, context):
         <code>
 curl https://ytsubs.app/subscriptions?api_key={api_key}&google_user_id={google_user_id}
         </code>
+        <p style="margin-top: 2em">Consider supporting this project and helping me develop cool tools:</p>
+        <a href='https://ko-fi.com/E1E5RZJY' target='_blank'><img height='36' style='border:0px;height:48px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
     </body>
     </html>
     """
