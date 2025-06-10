@@ -1,0 +1,42 @@
+name: Deploy Lambda Functions
+
+on:
+  push:
+    paths:
+      - 'fetch_subscriptions.py'
+      - 'oauth_start.py'
+      - 'oauth_callback.py'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        function:
+          - name: fetch_subscriptions
+            lambda: ${{ secrets.LAMBDA_FETCH_NAME }}
+          - name: oauth_start
+            lambda: ${{ secrets.LAMBDA_START_NAME }}
+          - name: oauth_callback
+            lambda: ${{ secrets.LAMBDA_CALLBACK_NAME }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy ${{ matrix.function.name }}
+        run: |
+          zip ${{
+            matrix.function.name }}.zip ${{
+            matrix.function.name }}.py
+          aws lambda update-function-code \
+            --function-name "${{ matrix.function.lambda }}" \
+            --zip-file "fileb://${{ matrix.function.name }}.zip"
