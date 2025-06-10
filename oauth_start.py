@@ -82,7 +82,7 @@ def lambda_handler(event, context):
         <p>A simple service to fetch and cache your YouTube subscriptions using the YouTube Data API.</p>
         <a href="{auth_url}" class="button">Sign in with Google</a>
         <h2>Example response:</h2>
-        <p>The API response with list of the user's subscriptions as they are returned by the <a href="https://developers.google.com/youtube/v3/docs/subscriptions#resource-representation" target="_blank">YouTube API</a> with an additional 'lastRetrievalDate' parameter indicating how old the data is (updated upon a call to the API every 12 hours)</p>
+        <p>The API response with list of the user's subscriptions as they are returned by the <a style="color: cornflowerblue" href="https://developers.google.com/youtube/v3/docs/subscriptions#resource-representation" target="_blank">YouTube API</a> with an additional 'lastRetrievalDate' parameter indicating how old the data is (updated upon a call to the API every 12 hours)</p>
         <code>
 &#123;
   "lastRetrievalDate": "2025-06-10T01:32:08.355395",
