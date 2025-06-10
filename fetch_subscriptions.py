@@ -38,8 +38,11 @@ def lambda_handler(event, context):
         if (now - last_updated).total_seconds() < 43200:  # 12 hours
             return {
                 "statusCode": 200,
-                "body": cache['data'],
-                "headers": {"Content-Type": "application/json"}
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps({
+                    "lastRetrievalDate": last_updated.isoformat(),
+                    "subscriptions": json.loads(cache['data'])
+                })
             }
 
     # Fetch new data from YouTube
@@ -91,6 +94,9 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": response_data,
-        "headers": {"Content-Type": "application/json"}
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps({
+            "lastRetrievalDate": now.isoformat(),
+            "subscriptions": all_subs
+        })
     }
