@@ -108,7 +108,6 @@ Returns:
 
 ## 🔄 Future Improvements
 
-* 🔁 Automatic `refresh_token` support
 * 🧱 CloudFront for caching and rate limiting
 * 📈 Per-user usage metrics
 * 🌍 Multi-region redundancy
