@@ -1,84 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta charset="UTF-8">
-        <title>YTSubs Privacy Policy</title>
-        <style>
-            body {
-                background-color: #121212;
-                color: #e0e0e0;
-                font-family: sans-serif;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: flex-start;
-                margin: 0;
-                text-align: left;
-                padding: 2em;
-                line-height: 1.6;
-                max-width: 800px;
-                margin-inline: auto;
-            }
-            h1 {
-                text-align: center;
-            }
-            a {
-                color: #90caf9;
-            }
-        </style>
-    </head>
-    <body>
-        <h1>YTSubs Privacy Policy</h1>
-        <p><strong>Effective Date:</strong> June 6, 2025</p>
-        <p><strong>Domain:</strong> <a href="https://ytsubs.app">https://ytsubs.app</a></p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YTSubs Privacy Policy</title>
+    <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon">
+    <style>
+      body {
+        background-color: #121212;
+        color: #e0e0e0;
+        font-family: sans-serif;
+        line-height: 1.6;
+        padding: 2em;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      h1, h2, h3 {
+        text-align: center;
+      }
+      a {
+        color: #90caf9;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>YTSubs Privacy Policy</h1>
+    <p><strong>Last updated:</strong> June 6, 2025</p>
 
-        <h2>🔐 Information We Collect</h2>
-        <p>When you authenticate with Google, we collect:</p>
-        <ul>
-            <li>Google Account ID</li>
-            <li>Email address</li>
-            <li>YouTube access token</li>
-            <li>YouTube refresh token</li>
-            <li>List of your subscribed YouTube channels</li>
-        </ul>
-        <p>We do <strong>not</strong> collect your name, profile photo, or any other non-essential personal data.</p>
+    <p>This Privacy Policy describes our policies and procedures on the collection, use, and disclosure of your information when you use the YTSubs web service, and informs you about your privacy rights and how the law protects you.</p>
 
-        <h2>💾 How We Use Your Data</h2>
-        <p>Your data is used to:</p>
-        <ul>
-            <li>Retrieve your YouTube subscriptions using the YouTube Data API</li>
-            <li>Cache your subscriptions for 12 hours to reduce load</li>
-            <li>Refresh your access token when it expires</li>
-        </ul>
-        <p>Your data is never shared, sold, or used for advertising.</p>
+    <h2>Summary</h2>
+    <ul>
+      <li>You authenticate using your Google account (OAuth)</li>
+      <li>We store only what is necessary to retrieve your subscriptions</li>
+      <li>We do not sell or track personal data</li>
+    </ul>
 
-        <h2>📂 Data Storage</h2>
-        <p>We store data securely in AWS DynamoDB. Your tokens and subscription data are not accessible to third parties. Data is retained only as long as necessary to provide the service.</p>
+    <h2>Information We Collect</h2>
+    <p>We may collect the following:</p>
+    <ul>
+      <li>Email address (from Google)</li>
+      <li>YouTube OAuth access and refresh tokens</li>
+      <li>Your subscription list (temporarily cached)</li>
+      <li>Your Google user ID and internal API key for access control</li>
+    </ul>
 
-        <h2>❌ How to Remove Your Data</h2>
-        <p>You may:</p>
-        <ul>
-            <li>Email <a href="mailto:derekantrican@gmail.com">derekantrican@gmail.com</a> to request data deletion</li>
-            <li>Revoke YTSubs access from your <a href="https://myaccount.google.com/permissions" target="_blank">Google Account Permissions</a></li>
-        </ul>
+    <h2>Use of Your Personal Data</h2>
+    <ul>
+      <li>To fetch your YouTube subscriptions</li>
+      <li>To cache the results for performance (12 hours max)</li>
+      <li>To refresh your YouTube token when needed</li>
+    </ul>
 
-        <h2>📉 Third-Party Services</h2>
-        <ul>
-            <li>Google OAuth 2.0 (authentication)</li>
-            <li>YouTube Data API (subscription data)</li>
-            <li>AWS (hosting and storage)</li>
-        </ul>
+    <h2>Retention of Your Data</h2>
+    <p>We store minimal data in AWS DynamoDB and only for the duration necessary to fulfill the service. Subscriptions are refreshed every 12 hours.</p>
 
-        <h2>🔒 Security</h2>
-        <p>We use secure HTTPS, token-based authentication, and isolate all user records.</p>
+    <h2>Security</h2>
+    <p>All communication is encrypted (HTTPS). Tokens and keys are stored securely using AWS infrastructure. We cannot guarantee absolute security.</p>
 
-        <h2>👤 Developer Contact</h2>
-        <p>YTSubs is maintained by Derek Antrican.<br>
-        Email: <a href="mailto:derekantrican@gmail.com">derekantrican@gmail.com</a></p>
+    <h2>Your Rights Under GDPR</h2>
+    <p>If you are in the EU, you have rights under the General Data Protection Regulation, including:</p>
+    <ul>
+      <li>Access your data</li>
+      <li>Correct your data</li>
+      <li>Request deletion of your data</li>
+      <li>Withdraw consent at any time</li>
+    </ul>
 
-        <h2>🔄 Changes to This Policy</h2>
-        <p>This Privacy Policy may be updated. Any changes will be posted here with a revised effective date.</p>
-    </body>
+    <p>To exercise these rights, contact <a href="mailto:derekantrican@gmail.com">derekantrican@gmail.com</a>.</p>
+
+    <h2>CCPA / CPRA (California)</h2>
+    <p>We do not sell personal information. You may request access or deletion of any data associated with you by contacting us.</p>
+
+    <h2>CalOPPA Compliance</h2>
+    <p>We honor Do Not Track (DNT) browser requests. YTSubs does not use cookies or advertising trackers.</p>
+
+    <h2>Children’s Privacy</h2>
+    <p>YTSubs does not target or knowingly collect data from anyone under 13 years old.</p>
+
+    <h2>Data Deletion</h2>
+    <p>To delete your data, revoke access in your Google account and email us at <a href="mailto:derekantrican@gmail.com">derekantrican@gmail.com</a>.</p>
+
+    <h2>Third-Party Services</h2>
+    <ul>
+      <li>Google OAuth and YouTube API</li>
+      <li>Amazon Web Services (S3, Lambda, DynamoDB)</li>
+    </ul>
+
+    <h2>Changes to This Policy</h2>
+    <p>We may update this policy. Changes will be posted on this page with an updated date.</p>
+
+    <h2>Contact Us</h2>
+    <p>For questions about this policy or your data, contact:<br>
+      <a href="mailto:derekantrican@gmail.com">derekantrican@gmail.com</a>
+    </p>
+  </body>
 </html>
