@@ -64,3 +64,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+
+      - name: Invalidate CloudFront cache # Force privacypolicy.html page to refresh upon push
+        run: |
+          DISTRIBUTION_ID="your-cloudfront-distribution-id"
+          aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/privacypolicy.html"
