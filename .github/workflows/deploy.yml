@@ -67,5 +67,5 @@ jobs:
 
       - name: Invalidate CloudFront cache # Force privacypolicy.html page to refresh upon push
         run: |
-          DISTRIBUTION_ID="your-cloudfront-distribution-id"
+          DISTRIBUTION_ID="E20BW1IS40JO0V"
           aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/privacypolicy.html"
