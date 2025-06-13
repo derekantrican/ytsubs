@@ -119,6 +119,9 @@ def lambda_handler(event, context):
 &#125;
         </code>
         <a style="margin-top: 2.5em" href='https://ko-fi.com/E1E5RZJY' target='_blank'><img height='36' style='border:0px;height:48px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+        <footer style="margin-top: 2em;">
+          <a href="https://static.ytsubs.app/privacypolicy.html" style="color: cornflowerblue;">Privacy Policy</a>
+        </footer>
     </body>
     </html>
     """

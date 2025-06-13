@@ -154,6 +154,9 @@ curl https://ytsubs.app/subscriptions?api_key={api_key}&google_user_id={google_u
         </code>
         <p style="margin-top: 2em">Consider supporting this project and helping me develop cool tools:</p>
         <a href='https://ko-fi.com/E1E5RZJY' target='_blank'><img height='36' style='border:0px;height:48px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+        <footer style="margin-top: 2em;">
+          <a href="https://static.ytsubs.app/privacypolicy.html" style="color: cornflowerblue;">Privacy Policy</a>
+        </footer>
     </body>
     </html>
     """
