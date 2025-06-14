@@ -83,19 +83,21 @@ def lambda_handler(event, context):
         api_key = items[0]["api_key"]
     else:
         api_key = secrets.token_urlsafe(30)  # 40-ish character random string
-        try:
-            keys_table.put_item(Item={
-                "api_key": api_key,
-                "google_user_id": google_user_id,
-                "email": email,
-                "youtube_access_token": access_token,
-                "youtube_refresh_token": refresh_token
-            })
-        except Exception as e:
-            return {
-                "statusCode": 500,
-                "body": f"Failed to store user in DynamoDB: {str(e)}"
-            }
+
+    # Create or update user record
+    try:
+        keys_table.put_item(Item={
+            "api_key": api_key,
+            "google_user_id": google_user_id,
+            "email": email,
+            "youtube_access_token": access_token,
+            "youtube_refresh_token": refresh_token
+        })
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": f"Failed to store user in DynamoDB: {str(e)}"
+        }
 
     # Return dark-themed HTML with API key and curl command
     html = f"""
