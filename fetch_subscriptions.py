@@ -82,6 +82,14 @@ def lambda_handler(event, context):
                     new_token = refresh_access_token(refresh_token)
                     if new_token:
                         return fetch_subs(new_token)
+                    else:
+                        return {
+                            "statusCode": 403,
+                            "body": json.dumps({
+                                "error": "Access to YouTube was revoked. Please visit https://ytsubs.app and sign in again."
+                            }),
+                            "headers": {"Content-Type": "application/json"}
+                        }
                 raise e
         return all_subs
 
@@ -111,6 +119,8 @@ def lambda_handler(event, context):
 
     try:
         all_subs = fetch_subs(access_token)
+        if isinstance(all_subs, dict) and all_subs.get("statusCode") == 403:
+            return all_subs
     except Exception as e:
         return {
             "statusCode": 500,
