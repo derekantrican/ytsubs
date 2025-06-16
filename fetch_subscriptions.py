@@ -90,6 +90,14 @@ def lambda_handler(event, context):
                             }),
                             "headers": {"Content-Type": "application/json"}
                         }
+                elif e.code == 403:
+                    return {
+                        "statusCode": 403,
+                        "headers": {"Content-Type": "application/json"},
+                        "body": json.dumps({
+                            "error": "Access to YouTube was denied. Please visit https://ytsubs.app and sign in again, ensuring you grant YouTube access."
+                        })
+                    }
                 raise e
         return all_subs
 
