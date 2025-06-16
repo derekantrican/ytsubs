@@ -30,8 +30,9 @@ def lambda_handler(event, context):
         req = urllib.request.Request("https://oauth2.googleapis.com/token", data=data)
         with urllib.request.urlopen(req) as resp:
             token_data = json.loads(resp.read().decode())
-
+            granted_scopes = token_data.get("scope", "")
             required_scope = "https://www.googleapis.com/auth/youtube.readonly"
+            
             if required_scope not in granted_scopes.split():
                 return {
                     "statusCode": 400,
