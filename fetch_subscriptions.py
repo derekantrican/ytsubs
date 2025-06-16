@@ -29,10 +29,10 @@ def lambda_handler(event, context):
         }
 
     # Check if data is cached
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc)
     cache = subs_table.get_item(Key={'api_key': api_key}).get('Item')
     if cache:
-        last_updated = datetime.datetime.fromisoformat(cache['last_updated'])
+        last_updated = datetime.datetime.fromisoformat(cache['last_updated'].replace("Z", "+00:00"))
         if (now - last_updated).total_seconds() < 43200:  # 12 hours
             return {
                 "statusCode": 200,
