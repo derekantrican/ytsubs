@@ -32,14 +32,14 @@ def lambda_handler(event, context):
             token_data = json.loads(resp.read().decode())
             granted_scopes = token_data.get("scope", "")
             required_scope = "https://www.googleapis.com/auth/youtube.readonly"
-            
+
             if required_scope not in granted_scopes.split():
                 return {
                     "statusCode": 400,
                     "headers": {"Content-Type": "text/html"},
                     "body": """
                     <html>
-                        <body style="color: white; background-color: #121212; text-align: center; padding: 2em;">
+                        <body style="color: white; background-color: #121212; text-align: center; font-family: sans-serif; padding: 2em;">
                             <h1>Authorization Incomplete</h1>
                             <p>You did not grant access to your YouTube subscriptions.</p>
                             <p>Please go back and ensure you check the box for YouTube access during sign-in.</p>
