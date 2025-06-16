@@ -38,7 +38,7 @@ def lambda_handler(event, context):
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps({
-                    "lastRetrievalDate": last_updated.isoformat(),
+                    "lastRetrievalDate": last_updated.isoformat() + "Z",
                     "subscriptions": json.loads(cache['data'])
                 })
             }
@@ -131,7 +131,7 @@ def lambda_handler(event, context):
     response_data = json.dumps(all_subs)
     subs_table.put_item(Item={
         "api_key": api_key,
-        "last_updated": now.isoformat(),
+        "last_updated": now.isoformat() + "Z",
         "data": response_data
     })
 
@@ -139,7 +139,7 @@ def lambda_handler(event, context):
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps({
-            "lastRetrievalDate": now.isoformat(),
+            "lastRetrievalDate": now.isoformat() + "Z",
             "subscriptions": all_subs
         })
     }
