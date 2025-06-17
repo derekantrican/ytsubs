@@ -75,7 +75,7 @@ def lambda_handler(event, context):
                 </style>
             </head>
             <body>
-                <h1>⚠️ OAuth Link Expired</h1>
+                <h1>OAuth Link Expired</h1>
                 <p>Your authorization link has expired or is invalid.</p>
                 <p>Please <a href="https://ytsubs.app">go back to the homepage</a> and try again.</p>
             </body>
