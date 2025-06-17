@@ -47,10 +47,40 @@ def lambda_handler(event, context):
                     </html>
                     """
                 }
-    except Exception as e:
+    except urllib.error.HTTPError as e:
+        error_msg = e.read().decode()
+        print(f"Error exchanging token: {e} - {error_msg}")
+        
         return {
-            "statusCode": 500,
-            "body": f"Error exchanging token: {str(e)}"
+            "statusCode": 400,
+            "headers": {"Content-Type": "text/html"},
+            "body": """
+            <html>
+            <head>
+                <style>
+                body {
+                    background-color: #121212;
+                    color: #e0e0e0;
+                    font-family: sans-serif;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    text-align: center;
+                }
+                a {
+                    color: cornflowerblue;
+                }
+                </style>
+            </head>
+            <body>
+                <h1>⚠️ OAuth Link Expired</h1>
+                <p>Your authorization link has expired or is invalid.</p>
+                <p>Please <a href="https://ytsubs.app">go back to the homepage</a> and try again.</p>
+            </body>
+            </html>
+            """
         }
 
     access_token = token_data.get('access_token')
