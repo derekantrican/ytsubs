@@ -32,13 +32,14 @@ def lambda_handler(event, context):
     now = datetime.datetime.now(datetime.timezone.utc)
     cache = subs_table.get_item(Key={'api_key': api_key}).get('Item')
     if cache:
-        last_updated = datetime.datetime.fromisoformat(cache['last_updated'].replace("Z", "+00:00"))
+        last_updated = datetime.datetime.strptime(cache['last_updated'], '%Y-%m-%dT%H:%M:%SZ')
+        last_updated = last_updated.replace(tzinfo=datetime.timezone.utc)
         if (now - last_updated).total_seconds() < 43200:  # 12 hours
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps({
-                    "lastRetrievalDate": last_updated.isoformat() + "Z",
+                    "lastRetrievalDate": last_updated.strftime('%Y-%m-%dT%H:%M:%SZ'),
                     "subscriptions": json.loads(cache['data'])
                 })
             }
@@ -139,7 +140,7 @@ def lambda_handler(event, context):
     response_data = json.dumps(all_subs)
     subs_table.put_item(Item={
         "api_key": api_key,
-        "last_updated": now.isoformat() + "Z",
+        "last_updated": now.strftime('%Y-%m-%dT%H:%M:%SZ'),
         "data": response_data
     })
 
@@ -147,7 +148,7 @@ def lambda_handler(event, context):
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps({
-            "lastRetrievalDate": now.isoformat() + "Z",
+            "lastRetrievalDate": now.strftime('%Y-%m-%dT%H:%M:%SZ'),
             "subscriptions": all_subs
         })
     }
