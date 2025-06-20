@@ -80,7 +80,7 @@ def lambda_handler(event, context):
     </head>
     <body>
         <img class="logo" src="https://static.ytsubs.app/logo.png"/>
-        <h1>Welcome to YTSubs</h1>
+        <h1>Welcome to YTSubs: subscription exporter</h1>
         <p>A simple service to fetch and cache your YouTube subscriptions using the YouTube Data API.</p>
         <a href="{auth_url}" class="button">Sign in with Google</a>
         <h2>Example response:</h2>
