@@ -22,7 +22,7 @@ def lambda_handler(event, context):
         <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
-        <title>Welcome to YTSubs</title>
+        <title>Welcome to YTSubs: subscription exporter</title>
         <style>
             body {{
                 background-color: #121212;
