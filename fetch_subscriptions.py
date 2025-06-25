@@ -3,7 +3,7 @@ import datetime
 import urllib.request
 import urllib.parse
 import boto3
-import os
+from .utils import getenv
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
@@ -119,8 +119,8 @@ def lambda_handler(event, context):
         return all_subs
 
     def refresh_access_token(refresh_token):
-        client_id = os.environ['GOOGLE_CLIENT_ID']
-        client_secret = os.environ['GOOGLE_CLIENT_SECRET']
+        client_id = getenv('GOOGLE_CLIENT_ID')
+        client_secret = getenv('GOOGLE_CLIENT_SECRET')
         token_url = "https://oauth2.googleapis.com/token"
         data = urllib.parse.urlencode({
             "client_id": client_id,
