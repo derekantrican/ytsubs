@@ -1,8 +1,8 @@
-# YTSubs: YouTube Subscriptions API Service
+# YTSubs: YouTube Subscriptions Exporter API Service
 
 YTSubs is a serverless web service that allows users to authenticate with their Google account and securely retrieve a cached list of their YouTube subscriptions. This system is powered by AWS Lambda, API Gateway, DynamoDB, and GitHub Actions for continuous deployment.
 
-## ChatGPT conversation: https://chatgpt.com/c/68428518-d480-8002-b8fb-fcc16f485f61
+This was mostly built with ChatGPT, so please provide feedback where things could be improved.
 
 ## 🌐 Live URL
 
@@ -36,27 +36,15 @@ graph TD
 ## 📁 Repo Structure
 
 ```
-
 ytsubs-lambdas/
 ├── fetch\_subscriptions.py     # Lambda for /subscriptions
-├── oauth\_start.py             # Lambda for /
+├── oauth\_start.py             # Lambda for / (homepage)
 ├── oauth\_callback.py          # Lambda for /auth/callback
+├── static/                     # Static sources such as images & privacy policy
 └── .github/
-└── workflows/
-└── deploy.yml         # GitHub Actions CI/CD workflow
-
+   └── workflows/
+      └── deploy.yml         # GitHub Actions CI/CD workflow
 ````
-
-
-## 🔐 Environment Variables
-
-Each Lambda function requires certain environment variables to be set in AWS:
-
-| Variable               | Description                                    |
-|------------------------|------------------------------------------------|
-| `GOOGLE_CLIENT_ID`     | Google OAuth Client ID                         |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth Client Secret                     |
-| `GOOGLE_REDIRECT_URI`  | Must match `https://ytsubs.app/auth/callback`  |
 
 
 ## 💾 DynamoDB Tables
@@ -66,22 +54,6 @@ Each Lambda function requires certain environment variables to be set in AWS:
 
 - `ytsubs_subscriptions_cache`  
   Caches YouTube subscription data per user (12-hour TTL)
-
-
-## 🛠 Deployment (via GitHub Actions)
-
-Deployment is handled automatically using GitHub Actions.
-
-### Secrets Required (set in GitHub > Settings > Secrets > Actions):
-
-| Secret Name             | Value                            |
-|-------------------------|----------------------------------|
-| `AWS_ACCESS_KEY_ID`     | From IAM user with Lambda access |
-| `AWS_SECRET_ACCESS_KEY` | From IAM user with Lambda access |
-| `AWS_REGION`            | e.g., `us-west-2`                |
-| `LAMBDA_FETCH_NAME`     | Name of the `fetch_subscriptions` Lambda |
-| `LAMBDA_START_NAME`     | Name of the `oauth_start` Lambda |
-| `LAMBDA_CALLBACK_NAME`  | Name of the `oauth_callback` Lambda |
 
 
 ## 🧪 API Usage
@@ -106,7 +78,7 @@ Returns:
 }
 ```
 
-## 🔄 Future Improvements
+## 🔄 Future Improvements that could be considered
 
 * 🧱 CloudFront for caching and rate limiting
 * 📈 Per-user usage metrics
@@ -117,5 +89,4 @@ Returns:
 * API Gateway custom domain managed via Cloudflare (`ytsubs.app`)
 * TLS certificate issued via AWS ACM (auto-renewing via DNS validation)
 * GitHub Actions deploys `.py` files directly using zipped CLI update
-* **ChatGPT conversation: https://chatgpt.com/c/68428518-d480-8002-b8fb-fcc16f485f61**
 
