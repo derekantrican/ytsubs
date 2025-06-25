@@ -14,6 +14,23 @@ def lambda_handler(event, context):
     api_key = query_params.get('api_key')
     google_user_id = query_params.get('google_user_id')
 
+    def now():
+        return datetime.datetime.now(tz=datetime.timezone.utc)
+
+    def datetime_from_db(arg_str, /):
+        if arg_str.endswith('Z'):
+            arg_str = arg_str[:-1] + '+00:00'
+        return datetime.datetime.fromisoformat( arg_str )
+
+    def datetime_to_db(arg_dt, /):
+        return arg_dt.isoformat(timespec='seconds')
+
+    def datetime_to_json(arg_dt, /):
+        return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    def newer_than(arg_dt, /, *args, **kwargs):
+        return arg_dt > (now() - datetime.timedelta(*args, **kwargs))
+
     if not api_key or not google_user_id:
         return {
             "statusCode": 401,
@@ -29,17 +46,16 @@ def lambda_handler(event, context):
         }
 
     # Check if data is cached
-    now = datetime.datetime.now(datetime.timezone.utc)
+    now = now()
     cache = subs_table.get_item(Key={'api_key': api_key}).get('Item')
     if cache:
-        last_updated = datetime.datetime.strptime(cache['last_updated'], '%Y-%m-%dT%H:%M:%SZ')
-        last_updated = last_updated.replace(tzinfo=datetime.timezone.utc)
-        if (now - last_updated).total_seconds() < 43200:  # 12 hours
+        last_updated = datetime_from_db(cache['last_updated'])
+        if newer_than(last_updated, hours=12):
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps({
-                    "lastRetrievalDate": last_updated.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    "lastRetrievalDate": datetime_to_json(last_updated),
                     "subscriptions": json.loads(cache['data'])
                 })
             }
@@ -140,7 +156,7 @@ def lambda_handler(event, context):
     response_data = json.dumps(all_subs)
     subs_table.put_item(Item={
         "api_key": api_key,
-        "last_updated": now.strftime('%Y-%m-%dT%H:%M:%SZ'),
+        "last_updated": datetime_to_json(now),
         "data": response_data
     })
 
@@ -148,7 +164,7 @@ def lambda_handler(event, context):
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps({
-            "lastRetrievalDate": now.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            "lastRetrievalDate": datetime_to_json(now),
             "subscriptions": all_subs
         })
     }
