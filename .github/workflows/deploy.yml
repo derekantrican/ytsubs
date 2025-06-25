@@ -6,6 +6,7 @@ on:
       - 'fetch_subscriptions.py'
       - 'oauth_start.py'
       - 'oauth_callback.py'
+      - 'utils.py'
       - 'static/**'
       - '.github/workflows/deploy.yml'
 
@@ -43,7 +44,7 @@ jobs:
 
       - name: Deploy ${{ matrix.function }}
         run: |
-          zip ${{ matrix.function }}.zip ${{ matrix.function }}.py
+          zip ${{ matrix.function }}.zip ${{ matrix.function }}.py utils.py
           aws lambda update-function-code \
             --function-name "${{ steps.set_lambda_name.outputs.lambda_name }}" \
             --zip-file "fileb://${{ matrix.function }}.zip"
