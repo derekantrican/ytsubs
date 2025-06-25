@@ -154,7 +154,7 @@ def lambda_handler(event, context):
         <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
-        <title>Your Subscription Exporter API Key</title>
+        <title>Your YTSubs: Subscription Exporter API Key</title>
         <style>
             body {{
                 background-color: #121212;

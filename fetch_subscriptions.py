@@ -31,18 +31,18 @@ def lambda_handler(event, context):
     # Check if data is cached
     now = datetime.datetime.now(datetime.timezone.utc)
     cache = subs_table.get_item(Key={'api_key': api_key}).get('Item')
-    # if cache:
-    #     last_updated = datetime.datetime.strptime(cache['last_updated'], '%Y-%m-%dT%H:%M:%SZ')
-    #     last_updated = last_updated.replace(tzinfo=datetime.timezone.utc)
-    #     if (now - last_updated).total_seconds() < 43200:  # 12 hours
-    #         return {
-    #             "statusCode": 200,
-    #             "headers": {"Content-Type": "application/json"},
-    #             "body": json.dumps({
-    #                 "lastRetrievalDate": last_updated.strftime('%Y-%m-%dT%H:%M:%SZ'),
-    #                 "subscriptions": json.loads(cache['data'])
-    #             })
-    #         }
+    if cache:
+        last_updated = datetime.datetime.strptime(cache['last_updated'], '%Y-%m-%dT%H:%M:%SZ')
+        last_updated = last_updated.replace(tzinfo=datetime.timezone.utc)
+        if (now - last_updated).total_seconds() < 43200:  # 12 hours
+            return {
+                "statusCode": 200,
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps({
+                    "lastRetrievalDate": last_updated.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    "subscriptions": json.loads(cache['data'])
+                })
+            }
 
     access_token = user.get('youtube_access_token')
     refresh_token = user.get('youtube_refresh_token')

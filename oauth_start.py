@@ -22,7 +22,7 @@ def lambda_handler(event, context):
         <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
-        <title>Welcome to Subscription Exporter</title>
+        <title>Welcome to YTSubs: Subscription Exporter</title>
         <style>
             body {{
                 background-color: #121212;
@@ -79,8 +79,8 @@ def lambda_handler(event, context):
         </style>
     </head>
     <body>
-        <img class="logo" src="https://static.ytsubs.app/subexport_dark.png"/>
-        <h1>Welcome to Subscription Exporter</h1>
+        <img class="logo" src="https://static.ytsubs.app/logo.png"/>
+        <h1>Welcome to YTSubs: Subscription Exporter</h1>
         <p>A simple service to fetch and cache your YouTube subscriptions using the YouTube Data API.</p>
         <a href="{auth_url}" class="button">Sign in with Google</a>
         <h2>Example response:</h2>
