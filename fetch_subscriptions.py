@@ -3,7 +3,7 @@ import datetime
 import urllib.request
 import urllib.parse
 import boto3
-from .utils import getenv
+from utils import getenv
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')

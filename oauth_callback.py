@@ -3,7 +3,7 @@ import urllib.parse
 import urllib.request
 import boto3
 import secrets
-from .utils import getenv
+from utils import getenv
 
 dynamodb = boto3.resource('dynamodb')
 keys_table = dynamodb.Table('ytsubs_api_keys')

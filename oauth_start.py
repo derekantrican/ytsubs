@@ -1,5 +1,5 @@
 import urllib.parse
-from .utils import getenv
+from utils import getenv
 
 def lambda_handler(event, context):
     redirect_uri = getenv("GOOGLE_REDIRECT_URI")
