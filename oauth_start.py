@@ -1,9 +1,9 @@
-import os
 import urllib.parse
+from .utils import getenv
 
 def lambda_handler(event, context):
-    redirect_uri = os.environ["GOOGLE_REDIRECT_URI"]
-    client_id = os.environ["GOOGLE_CLIENT_ID"]
+    redirect_uri = getenv("GOOGLE_REDIRECT_URI")
+    client_id = getenv("GOOGLE_CLIENT_ID")
     scope = "openid email https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/youtube.readonly"
     
     auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode({
