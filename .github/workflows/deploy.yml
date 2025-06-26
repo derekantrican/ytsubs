@@ -2,6 +2,8 @@ name: Deploy Lambda Functions and Static Assets
 
 on:
   push:
+    branches:
+      - 'main'
     paths:
       - 'fetch_subscriptions.py'
       - 'oauth_start.py'
