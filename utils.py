@@ -4,22 +4,6 @@ import collections
 import os
 
 
-GoogleEnvironment = collections.namedtuple(
-    'GoogleEnvironment',
-    list((
-        'client_id',
-        'client_secret',
-        'redirect_uri',
-    )),
-    defaults=(
-        getenv('GOOGLE_CLIENT_ID'),
-        getenv('GOOGLE_CLIENT_SECRET'),
-        getenv('GOOGLE_REDIRECT_URI'),
-    )
-)
-EnvGoogle = GoogleEnvironment()
-
-
 def default_kms_key():
     return 'alias/ytsubs-token-encrypt-key'
 
@@ -92,4 +76,20 @@ def urlsafe_b64decode(s, validate=True):
 
 def urlsafe_b64encode(s):
     return base64.urlsafe_b64encode(s)
+
+
+GoogleEnvironment = collections.namedtuple(
+    'GoogleEnvironment',
+    list((
+        'client_id',
+        'client_secret',
+        'redirect_uri',
+    )),
+    defaults=(
+        getenv('GOOGLE_CLIENT_ID'),
+        getenv('GOOGLE_CLIENT_SECRET'),
+        getenv('GOOGLE_REDIRECT_URI'),
+    )
+)
+EnvGoogle = GoogleEnvironment()
 
