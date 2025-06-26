@@ -1,5 +1,4 @@
 import json
-import datetime
 import urllib.request
 import urllib.parse
 import boto3
@@ -7,7 +6,6 @@ from utils import (
     EnvGoogle,
     dt_now as now,
     dt_from_db as datetime_from_db,
-    dt_to_db as datetime_to_db,
     dt_to_json as datetime_to_json,
     dt_to_ts,
     dynamodb_check_ttl,
