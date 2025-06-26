@@ -1,6 +1,7 @@
 import base64
 import boto3
 import collections
+import hashlib
 import os
 
 
@@ -66,6 +67,13 @@ def token_encrypt(arg_str, /, *, key=None):
     result_bytes = urlsafe_b64encode(encrypted_bytes)
     result_str = result_bytes.decode()
     return result_str
+
+
+def token_hash(arg_str, /):
+    arg_bytes = arg_str
+    if isinstance(arg_str, str):
+        arg_bytes = arg_str.encode()
+    return hashlib.sha256(arg_bytes).hexdigest()
 
 
 def urlsafe_b64decode(s, validate=True):

@@ -4,7 +4,7 @@ import hashlib
 import urllib.request
 import urllib.parse
 import boto3
-from utils import EnvGoogle, token_decrypt, token_encrypt
+from utils import EnvGoogle, token_decrypt, token_encrypt, token_hash
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
@@ -18,9 +18,7 @@ def lambda_handler(event, context):
     google_user_id_token = query_params.get('google_user_id_token')
     google_user_id = query_params.get('google_user_id')
     if google_user_id:
-        google_user_id_token = hashlib.sha256(
-            str(google_user_id).encode(),
-        ).hexdigest()
+        google_user_id_token = token_hash(google_user_id)
     google_user_id = None
 
     def now():
