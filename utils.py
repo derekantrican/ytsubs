@@ -6,6 +6,42 @@ import os
 def default_kms_key():
     return 'alias/ytsubs-token-encrypt-key'
 
+def dynamodb_check_ttl(table_name):
+    dynamodb = boto3.client('dynamodb')
+    expected_responses = frozenset((
+        'DISABLED',
+        'ENABLED',
+    ))
+    response = dynamodb.describe_time_to_live(TableName=table_name)
+    assert response in expected_responses, f'dynamodb_check_ttl: unexpected response: {response}'
+    return 'ENABLED' == response
+    
+def dynamodb_enable_ttl(table_name, ttl_attribute_name):
+    """
+    Enables TTL on DynamoDB table for a given attribute name
+        on success, returns a status code of 200
+        on error, throws an exception
+
+    :param table_name: Name of the DynamoDB table
+    :param ttl_attribute_name: The name of the TTL attribute being provided to the table.
+    """
+    dynamodb = boto3.client('dynamodb')
+
+    # Enable TTL on an existing DynamoDB table
+    response = dynamodb.update_time_to_live(
+        TableName=table_name,
+        TimeToLiveSpecification={
+            'Enabled': True,
+            'AttributeName': ttl_attribute_name
+        }
+    )
+
+    # In the returned response, check for a successful status code.
+    if 200 == response['ResponseMetadata']['HTTPStatusCode']:
+        return True
+    else:
+        raise Exception(f"Failed to enable TTL, status code {response['ResponseMetadata']['HTTPStatusCode']}")
+
 
 def getenv(key, default=None, /, *, integer=False, string=True):
     """
