@@ -154,7 +154,7 @@ def lambda_handler(event, context):
     response_data = json.dumps(all_subs)
     subs_table.put_item(Item={
         "api_key": api_key,
-        'expire_at_ts': dt_to_ts(expire_after(now_dt, days=1)),
+        'expire_at_ts': round(dt_to_ts(expire_after(now_dt, days=1))),
         "last_updated": now_dt_json,
         "data": response_data
     })
