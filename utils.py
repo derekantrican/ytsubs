@@ -1,4 +1,5 @@
 import base64
+import boto3
 import os
 
 
@@ -35,6 +36,29 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     elif integer:
         r = int(float(r))
     return r
+
+
+def token_decrypt(arg_str, /, *, key=None):
+    arg_bytes = urlsafe_b64decode(arg_str)
+    kms = boto3.client('kms')
+    if key is None:
+        response = kms.decrypt(CiphertextBlob=arg_bytes)
+    else:
+        response = kms.decrypt(CiphertextBlob=arg_bytes, KeyId=key)
+    result_bytes = response['Plaintext']
+    result_str = result_bytes.decode()
+    return result_str
+
+
+def token_encrypt(arg_str, /, *, key=None):
+    assert key is not None, 'token_encrypt requires a KMS key identifier'
+    arg_bytes = arg_str.encode() if isinstance(arg_str, str) else arg_str
+    kms = boto3.client('kms')
+    response = kms.encrypt(KeyId=key, Plaintext=arg_bytes)
+    encrypted_bytes = response['CiphertextBlob']
+    result_bytes = urlsafe_b64encode(encrypted_bytes)
+    result_str = result_bytes.decode()
+    return result_str
 
 
 def urlsafe_b64decode(s, validate=True):
