@@ -2,7 +2,6 @@ import json
 import urllib.parse
 import urllib.request
 import boto3
-import hashlib
 import html
 import secrets
 from utils import EnvGoogle, token_encrypt, token_hash
