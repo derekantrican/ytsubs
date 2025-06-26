@@ -3,18 +3,22 @@ import datetime
 import urllib.request
 import urllib.parse
 import boto3
-from utils import EnvGoogle
+from utils import (
+    EnvGoogle,
+    dt_now as now,
+    dt_from_db as datetime_from_db,
+    dt_to_db as datetime_to_db,
+    dt_to_json as datetime_to_json,
+    dt_to_ts,
+    dynamodb_check_ttl,
+    dynamodb_enable_ttl,
+    expire_after,
+    newer_than,
+)
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
 keys_table = dynamodb.Table('ytsubs_api_keys')
-
-
-def dt_to_ts(arg_dt, /):
-    dt = arg_dt
-    if arg_dt.utcoffset() is None:
-        dt = arg_dt.astimezone(tz=datetime.timezone.utc)
-    return dt.timestamp()
 
 
 def dynamodb_ttl():
@@ -27,26 +31,6 @@ def lambda_handler(event, context):
     query_params = event.get('queryStringParameters') or {}
     api_key = query_params.get('api_key')
     google_user_id = query_params.get('google_user_id')
-
-    def now():
-        return datetime.datetime.now(tz=datetime.timezone.utc)
-
-    def datetime_from_db(arg_str, /):
-        if arg_str.endswith('Z'):
-            arg_str = arg_str[:-1] + '+00:00'
-        return datetime.datetime.fromisoformat( arg_str )
-
-    def datetime_to_db(arg_dt, /):
-        return arg_dt.isoformat(timespec='seconds')
-
-    def datetime_to_json(arg_dt, /):
-        return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-
-    def expire_after(arg_dt, /, *args, **kwargs):
-        return now() + datetime.timedelta(*args, **kwargs)
-
-    def newer_than(arg_dt, /, *args, **kwargs):
-        return arg_dt > (now() - datetime.timedelta(*args, **kwargs))
 
     if not api_key or not google_user_id:
         return {
