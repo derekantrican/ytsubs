@@ -46,7 +46,7 @@ def lambda_handler(event, context):
         }
 
     # Check if data is cached
-    now = now()
+    now_dt = now()
     cache = subs_table.get_item(Key={'api_key': api_key}).get('Item')
     if cache:
         last_updated = datetime_from_db(cache['last_updated'])
@@ -156,7 +156,7 @@ def lambda_handler(event, context):
     response_data = json.dumps(all_subs)
     subs_table.put_item(Item={
         "api_key": api_key,
-        "last_updated": datetime_to_json(now),
+        "last_updated": datetime_to_json(now_dt),
         "data": response_data
     })
 
@@ -164,7 +164,7 @@ def lambda_handler(event, context):
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps({
-            "lastRetrievalDate": datetime_to_json(now),
+            "lastRetrievalDate": datetime_to_json(now_dt),
             "subscriptions": all_subs
         })
     }
