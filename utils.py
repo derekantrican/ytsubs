@@ -6,6 +6,14 @@ import os
 def default_kms_key():
     return 'alias/ytsubs-token-encrypt-key'
 
+
+def dt_to_ts(arg_dt, /):
+    dt = arg_dt
+    if arg_dt.utcoffset() is None:
+        dt = arg_dt.astimezone(tz=datetime.timezone.utc)
+    return dt.timestamp()
+
+
 def dynamodb_check_ttl(table_name):
     dynamodb = boto3.client('dynamodb')
     expected_responses = frozenset((
