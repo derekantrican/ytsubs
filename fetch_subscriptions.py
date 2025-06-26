@@ -1,6 +1,5 @@
 import json
 import datetime
-import hashlib
 import urllib.request
 import urllib.parse
 import boto3
