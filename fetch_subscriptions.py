@@ -4,9 +4,9 @@ import urllib.parse
 import boto3
 from utils import (
     EnvGoogle,
-    dt_now as now,
-    dt_from_db as datetime_from_db,
-    dt_to_json as datetime_to_json,
+    dt_now,
+    dt_from_db,
+    dt_to_json,
     dt_to_ts,
     dynamodb_check_ttl,
     dynamodb_enable_ttl,
@@ -22,7 +22,7 @@ keys_table = dynamodb.Table('ytsubs_api_keys')
 def dynamodb_ttl():
     if dynamodb_check_ttl('ytsubs_subscriptions_cache'):
         return True
-    dynamodb_enable_ttl('ytsubs_subscriptions_cache', 'expire_at_ts')
+    return dynamodb_enable_ttl('ytsubs_subscriptions_cache', 'expire_at_ts')
 
 
 def lambda_handler(event, context):
@@ -45,16 +45,15 @@ def lambda_handler(event, context):
         }
 
     # Check if data is cached
-    now_dt = now()
     cache = subs_table.get_item(Key={'api_key': api_key}).get('Item')
     if cache and 'True' != query_params.get('skip_cache'):
-        last_updated = datetime_from_db(cache['last_updated'])
+        last_updated = dt_from_db(cache['last_updated'])
         if newer_than(last_updated, hours=12):
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps({
-                    "lastRetrievalDate": datetime_to_json(last_updated),
+                    "lastRetrievalDate": dt_to_json(last_updated),
                     "subscriptions": json.loads(cache['data'])
                 })
             }
@@ -139,6 +138,8 @@ def lambda_handler(event, context):
             print(f"Failed to refresh token: {e}")
         return None
 
+    now_dt = dt_now()
+    now_dt_json = dt_to_json(now_dt)
     try:
         all_subs = fetch_subs(access_token)
         if isinstance(all_subs, dict) and all_subs.get("statusCode") == 403:
@@ -154,7 +155,7 @@ def lambda_handler(event, context):
     subs_table.put_item(Item={
         "api_key": api_key,
         'expire_at_ts': dt_to_ts(expire_after(now_dt, days=1)),
-        "last_updated": datetime_to_json(now_dt),
+        "last_updated": now_dt_json,
         "data": response_data
     })
 
@@ -170,7 +171,7 @@ def lambda_handler(event, context):
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps({
-            "lastRetrievalDate": datetime_to_json(now_dt),
+            "lastRetrievalDate": now_dt_json,
             "subscriptions": all_subs
         })
     }
