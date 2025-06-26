@@ -38,7 +38,9 @@ def dynamodb_check_ttl(table_name):
     dynamodb = boto3.client('dynamodb')
     expected_responses = frozenset((
         'DISABLED',
+        'DISABLING',
         'ENABLED',
+        'ENABLING',
     ))
     response = dynamodb.describe_time_to_live(TableName=table_name)
     assert response in expected_responses, f'dynamodb_check_ttl: unexpected response: {response}'
