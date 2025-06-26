@@ -4,7 +4,6 @@ import collections
 import os
 
 
-<<<<<<< tcely-patch-1
 GoogleEnvironment = collections.namedtuple(
     'GoogleEnvironment',
     list((
@@ -19,10 +18,10 @@ GoogleEnvironment = collections.namedtuple(
     )
 )
 EnvGoogle = GoogleEnvironment()
-=======
+
+
 def default_kms_key():
     return 'alias/ytsubs-token-encrypt-key'
->>>>>>> main
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
