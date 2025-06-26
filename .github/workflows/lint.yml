@@ -24,7 +24,7 @@ jobs:
         run: |
           python3 -m pip install uv
       - name: Check with ruff
-        continue-on-error: true
+        continue-on-error: false
         run: |
           target_version='py310'
           ignore_csv_list='E701,E722,E731'
