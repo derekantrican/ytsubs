@@ -1,6 +1,23 @@
 import base64
 import boto3
+import collections
 import os
+
+
+GoogleEnvironment = collections.namedtuple(
+    'GoogleEnvironment',
+    list((
+        'client_id',
+        'client_secret',
+        'redirect_uri',
+    )),
+    defaults=(
+        getenv('GOOGLE_CLIENT_ID'),
+        getenv('GOOGLE_CLIENT_SECRET'),
+        getenv('GOOGLE_REDIRECT_URI'),
+    )
+)
+EnvGoogle = GoogleEnvironment()
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
