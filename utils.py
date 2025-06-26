@@ -1,10 +1,29 @@
 import base64
 import boto3
+import datetime
 import os
 
 
 def default_kms_key():
     return 'alias/ytsubs-token-encrypt-key'
+
+
+def dt_from_db(arg_str, /):
+    if arg_str.endswith('Z'):
+        arg_str = arg_str[:-1] + '+00:00'
+    return datetime.datetime.fromisoformat( arg_str )
+
+
+def dt_now():
+    return datetime.datetime.now(tz=datetime.timezone.utc)
+
+
+def dt_to_db(arg_dt, /):
+    return arg_dt.isoformat(timespec='seconds')
+
+
+def dt_to_json(arg_dt, /):
+    return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
 def dt_to_ts(arg_dt, /):
@@ -51,6 +70,9 @@ def dynamodb_enable_ttl(table_name, ttl_attribute_name):
         raise Exception(f"Failed to enable TTL, status code {response['ResponseMetadata']['HTTPStatusCode']}")
 
 
+def expire_after(arg_dt, /, *args, **kwargs):
+    return dt_now() + datetime.timedelta(*args, **kwargs)
+
 def getenv(key, default=None, /, *, integer=False, string=True):
     """
         Guarantees a returned type from calling `os.getenv`
@@ -85,6 +107,9 @@ def getenv(key, default=None, /, *, integer=False, string=True):
         r = int(float(r))
     return r
 
+
+def newer_than(arg_dt, /, *args, **kwargs):
+    return arg_dt > (dt_now() - datetime.timedelta(*args, **kwargs))
 
 def token_decrypt(arg_str, /, *, key=None):
     arg_bytes = urlsafe_b64decode(arg_str)
