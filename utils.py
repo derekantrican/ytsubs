@@ -4,7 +4,7 @@ import os
 
 
 def default_kms_key():
-    return None
+    return 'alias/ytsubs-token-encrypt-key'
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
