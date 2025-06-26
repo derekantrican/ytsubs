@@ -3,7 +3,7 @@ import urllib.parse
 import urllib.request
 import boto3
 import secrets
-from utils import getenv
+from utils import EnvGoogle
 
 dynamodb = boto3.resource('dynamodb')
 keys_table = dynamodb.Table('ytsubs_api_keys')
@@ -20,9 +20,9 @@ def lambda_handler(event, context):
     # Exchange authorization code for tokens
     data = urllib.parse.urlencode({
         "code": code,
-        "client_id": getenv('GOOGLE_CLIENT_ID'),
-        "client_secret": getenv('GOOGLE_CLIENT_SECRET'),
-        "redirect_uri": getenv('GOOGLE_REDIRECT_URI'),
+        "client_id": EnvGoogle.client_id,
+        "client_secret": EnvGoogle.client_secret,
+        "redirect_uri": EnvGoogle.redirect_uri,
         "grant_type": "authorization_code"
     }).encode()
 
