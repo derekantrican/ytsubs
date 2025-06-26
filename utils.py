@@ -3,6 +3,10 @@ import boto3
 import os
 
 
+def default_kms_key():
+    return None
+
+
 def getenv(key, default=None, /, *, integer=False, string=True):
     """
         Guarantees a returned type from calling `os.getenv`
@@ -51,6 +55,8 @@ def token_decrypt(arg_str, /, *, key=None):
 
 
 def token_encrypt(arg_str, /, *, key=None):
+    if key is None:
+        key = default_kms_key()
     assert key is not None, 'token_encrypt requires a KMS key identifier'
     arg_bytes = arg_str.encode() if isinstance(arg_str, str) else arg_str
     kms = boto3.client('kms')
