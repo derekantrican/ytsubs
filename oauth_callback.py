@@ -2,8 +2,10 @@ import json
 import urllib.parse
 import urllib.request
 import boto3
+import hashlib
+import html
 import secrets
-from utils import EnvGoogle
+from utils import EnvGoogle, token_encrypt
 
 dynamodb = boto3.resource('dynamodb')
 keys_table = dynamodb.Table('ytsubs_api_keys')
@@ -104,7 +106,6 @@ def lambda_handler(event, context):
             "body": f"Error fetching user profile: {str(e)}"
         }
 
-    email = profile.get("email")
     google_user_id = profile.get("id")
 
     if not google_user_id:
@@ -113,11 +114,15 @@ def lambda_handler(event, context):
             "body": "Unable to get Google user ID"
         }
 
+    google_user_id_token = hashlib.sha256(
+        str(google_user_id).encode(),
+    ).hexdigest()
+
     # Check if user already exists
     try:
         response = keys_table.scan(
-            FilterExpression="google_user_id = :u",
-            ExpressionAttributeValues={":u": google_user_id}
+            FilterExpression="google_user_id_token = :u",
+            ExpressionAttributeValues={":u": google_user_id_token}
         )
         items = response.get("Items", [])
     except Exception as e:
@@ -135,10 +140,9 @@ def lambda_handler(event, context):
     try:
         keys_table.put_item(Item={
             "api_key": api_key,
-            "google_user_id": google_user_id,
-            "email": email,
-            "youtube_access_token": access_token,
-            "youtube_refresh_token": refresh_token
+            "google_user_id_token": google_user_id_token,
+            "youtube_access_token": token_encrypt(access_token),
+            "youtube_refresh_token": token_encrypt(refresh_token),
         })
     except Exception as e:
         return {
@@ -147,7 +151,7 @@ def lambda_handler(event, context):
         }
 
     # Return dark-themed HTML with API key and curl command
-    html = f"""
+    document_str = f'''\
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -191,15 +195,13 @@ def lambda_handler(event, context):
         </style>
     </head>
     <body>
-        <h1>Welcome, {email}</h1>
+        <h1>Welcome, {html.escape(google_user_id)}</h1>
         <p>Your API key is:</p>
-        <code>{api_key}</code>
-        <p>And your Google User ID is:</p>
-        <code>{google_user_id}</code>
+        <code>{html.escape(api_key)}</code>
 
-        <p>You can use them together to call the API like this:</p>
+        <p>You can use it to call the API like this:</p>
         <code>
-curl https://ytsubs.app/subscriptions?api_key={api_key}&google_user_id={google_user_id}
+curl https://ytsubs.app/subscriptions?api_key={html.escape(api_key)}
         </code>
         <p style="margin-top: 2em">Consider supporting this project and helping me develop cool tools:</p>
         <a href='https://ko-fi.com/E1E5RZJY' target='_blank'><img height='36' style='border:0px;height:48px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
@@ -208,10 +210,10 @@ curl https://ytsubs.app/subscriptions?api_key={api_key}&google_user_id={google_u
         </footer>
     </body>
     </html>
-    """
+    '''
 
     return {
         "statusCode": 200,
         "headers": { "Content-Type": "text/html" },
-        "body": html
+        "body": document_str,
     }
