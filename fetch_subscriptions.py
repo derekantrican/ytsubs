@@ -9,6 +9,20 @@ dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
 keys_table = dynamodb.Table('ytsubs_api_keys')
 
+
+def dt_to_ts(arg_dt, /):
+    dt = arg_dt
+    if arg_dt.utcoffset() is None:
+        dt = arg_dt.astimezone(tz=datetime.timezone.utc)
+    return dt.timestamp()
+
+
+def dynamodb_ttl():
+    if dynamodb_check_ttl('ytsubs_subscriptions_cache'):
+        return True
+    dynamodb_enable_ttl('ytsubs_subscriptions_cache', 'expire_at_ts')
+
+
 def lambda_handler(event, context):
     query_params = event.get('queryStringParameters') or {}
     api_key = query_params.get('api_key')
@@ -27,6 +41,9 @@ def lambda_handler(event, context):
 
     def datetime_to_json(arg_dt, /):
         return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    def expire_after(arg_dt, /, *args, **kwargs):
+        return now() + datetime.timedelta(*args, **kwargs)
 
     def newer_than(arg_dt, /, *args, **kwargs):
         return arg_dt > (now() - datetime.timedelta(*args, **kwargs))
@@ -48,7 +65,7 @@ def lambda_handler(event, context):
     # Check if data is cached
     now_dt = now()
     cache = subs_table.get_item(Key={'api_key': api_key}).get('Item')
-    if cache:
+    if cache and 'True' != query_params.get('skip_cache'):
         last_updated = datetime_from_db(cache['last_updated'])
         if newer_than(last_updated, hours=12):
             return {
@@ -156,9 +173,18 @@ def lambda_handler(event, context):
     response_data = json.dumps(all_subs)
     subs_table.put_item(Item={
         "api_key": api_key,
+        'expire_at_ts': dt_to_ts(expire_after(now_dt, days=1)),
         "last_updated": datetime_to_json(now_dt),
         "data": response_data
     })
+
+    try:
+        dynamodb_ttl()
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": f"Error with DynamoDB: {str(e)}"
+        }
 
     return {
         "statusCode": 200,
