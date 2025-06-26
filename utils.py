@@ -1,3 +1,4 @@
+import base64
 import os
 
 
@@ -34,4 +35,14 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     elif integer:
         r = int(float(r))
     return r
+
+
+def urlsafe_b64decode(s, validate=True):
+    b = base64._bytes_from_decode_data(s)
+    b = b.translate(base64._urlsafe_decode_translation)
+    return base64.b64decode(s, validate=validate)
+
+
+def urlsafe_b64encode(s):
+    return base64.urlsafe_b64encode(s)
 
