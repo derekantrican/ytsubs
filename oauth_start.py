@@ -1,12 +1,10 @@
 import html
 import urllib.parse
-from utils import getenv
+from utils import EnvGoogle
 
 def lambda_handler(event, context):
     api_auth_base_url = 'https://www.googleapis.com/auth'
     oauth_base_url = 'https://accounts.google.com/o/oauth2/v2/auth'
-    redirect_uri = getenv("GOOGLE_REDIRECT_URI")
-    client_id = getenv("GOOGLE_CLIENT_ID")
 
     scope = ' '.join((
         'openid',
@@ -17,9 +15,9 @@ def lambda_handler(event, context):
 
     qsl = list((
         ('access_type', 'offline',),
-        ('client_id', client_id,),
+        ('client_id', EnvGoogle.client_id,),
         ('prompt', 'consent',),
-        ('redirect_uri', redirect_uri,),
+        ('redirect_uri', EnvGoogle.redirect_uri,),
         ('response_type', 'code',),
         ('scope', scope,),
     ))
