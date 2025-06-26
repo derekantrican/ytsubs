@@ -5,7 +5,7 @@ import boto3
 import hashlib
 import html
 import secrets
-from utils import EnvGoogle, token_encrypt
+from utils import EnvGoogle, token_encrypt, token_hash
 
 dynamodb = boto3.resource('dynamodb')
 keys_table = dynamodb.Table('ytsubs_api_keys')
@@ -114,9 +114,7 @@ def lambda_handler(event, context):
             "body": "Unable to get Google user ID"
         }
 
-    google_user_id_token = hashlib.sha256(
-        str(google_user_id).encode(),
-    ).hexdigest()
+    google_user_id_token = token_hash(google_user_id)
 
     # Check if user already exists
     try:
