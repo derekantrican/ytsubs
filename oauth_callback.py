@@ -54,25 +54,10 @@ def lambda_handler(event, context):
         return {
             "statusCode": 400,
             "headers": {"Content-Type": "text/html"},
-            "body": """
+            "body": '''
             <html>
             <head>
-                <style>
-                body {
-                    background-color: #121212;
-                    color: #e0e0e0;
-                    font-family: sans-serif;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100vh;
-                    text-align: center;
-                }
-                a {
-                    color: cornflowerblue;
-                }
-                </style>
+                <link rel="stylesheet" href="https://static.ytsubs.app/callback_expired.css" blocking="render" />
             </head>
             <body>
                 <h1>OAuth Link Expired</h1>
@@ -80,7 +65,7 @@ def lambda_handler(event, context):
                 <p>Please <a href="https://ytsubs.app">go back to the homepage</a> and try again.</p>
             </body>
             </html>
-            """
+            '''
         }
 
     access_token = token_data.get('access_token')
@@ -151,44 +136,11 @@ def lambda_handler(event, context):
     <!DOCTYPE html>
     <html lang="en">
     <head>
-        <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon" />
+        <link rel="stylesheet" href="https://static.ytsubs.app/callback.css" blocking="render" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
         <title>Your YTSubs: Subscription Exporter API Key</title>
-        <style>
-            body {{
-                background-color: #121212;
-                color: #e0e0e0;
-                font-family: sans-serif;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                margin: 0;
-                text-align: center;
-                padding: 1em;
-            }}
-            h1 {{
-                font-size: 1.8em;
-                margin-bottom: 0.2em;
-                word-wrap: break-word;
-                width: 100%;
-            }}
-            p {{
-                font-size: 1.1em;
-                margin: 0.5em 0;
-            }}
-            code {{
-                background: #1e1e1e;
-                padding: 0.5em;
-                border-radius: 5px;
-                display: block;
-                margin: 1em auto;
-                max-width: 90%;
-                overflow-x: auto;
-                text-align: left;
-            }}
-        </style>
     </head>
     <body>
         <h1>Welcome, {email}</h1>
