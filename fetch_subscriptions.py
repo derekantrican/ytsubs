@@ -48,7 +48,7 @@ def lambda_handler(event, context):
     # Check if data is cached
     now_dt = now()
     cache = subs_table.get_item(Key={'api_key': api_key}).get('Item')
-    if cache and 'True' != query_params.get('skip_cache'):
+    if cache:
         last_updated = datetime_from_db(cache['last_updated'])
         if newer_than(last_updated, hours=12):
             return {
@@ -77,9 +77,6 @@ def lambda_handler(event, context):
             "mine": "true",
             "maxResults": "50"
         }
-        # allow a test user to experiment with the output
-        if '107185487564013089979' == user.get('google_user_id'):
-            params['part'] = query_params.get('part') or params['part']
         base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
         all_subs = []
         next_page_token = None
