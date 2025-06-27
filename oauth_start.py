@@ -63,64 +63,11 @@ def lambda_handler(event, context):
     <!DOCTYPE html>
     <html lang="en">
     <head>
-        <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon" />
+        <link rel="stylesheet" href="https://static.ytsubs.app/start.css" blocking="render" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
         <title>Welcome to YTSubs: Subscription Exporter</title>
-        <style>
-            body {{
-                background-color: #121212;
-                color: #e0e0e0;
-                font-family: sans-serif;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                margin: 0;
-                text-align: center;
-                padding: 2em 1em;
-            }}
-            .logo {{
-                width: 150px;
-                height: 150px;
-            }}
-            h1 {{
-                font-size: 2em;
-                margin-bottom: 0.2em;
-            }}
-            h2 {{
-                margin-top: 2.5em;
-            }}
-            p {{
-                font-size: 1.1em;
-                margin-bottom: 2em;
-                max-width: 500px;
-            }}
-            a.button {{
-                display: inline-block;
-                padding: 1em 2em;
-                background-color: #4285F4;
-                color: white;
-                text-decoration: none;
-                font-size: 1.2em;
-                border-radius: 6px;
-                transition: background-color 0.3s ease;
-            }}
-            a.button:hover {{
-                background-color: #357ae8;
-            }}
-            code {{
-                white-space: pre-wrap;
-                background: #1e1e1e;
-                padding: 0.5em;
-                border-radius: 5px;
-                display: block;
-                margin: 1em auto;
-                max-width: 90%;
-                overflow-x: auto;
-                text-align: left;
-            }}
-        </style>
     </head>
     <body>
         <img class="logo" src="https://static.ytsubs.app/logo.png"/>
