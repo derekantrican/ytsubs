@@ -120,7 +120,7 @@ def lambda_handler(event, context):
         response = mapping_table.get_item(Key={
             'google_user_id': google_user_id,
         })
-        item = response.get('Item')
+        item = response.get('Item', {})
         api_key = item.get('api_key') or None
     except:
         try:
