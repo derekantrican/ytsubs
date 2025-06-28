@@ -7,6 +7,7 @@ from utils import EnvGoogle
 
 dynamodb = boto3.resource('dynamodb')
 keys_table = dynamodb.Table('ytsubs_api_keys')
+mapping_table = dynamodb.Table('ytsubs_user_to_api')
 
 def lambda_handler(event, context):
     params = event.get('queryStringParameters') or {}
@@ -114,21 +115,28 @@ def lambda_handler(event, context):
         }
 
     # Check if user already exists
+    api_key = None
     try:
-        response = keys_table.scan(
-            FilterExpression="google_user_id = :u",
-            ExpressionAttributeValues={":u": google_user_id}
-        )
-        items = response.get("Items", [])
-    except Exception as e:
-        return {
-            "statusCode": 500,
-            "body": f"DynamoDB scan failed: {str(e)}"
-        }
+        response = mapping_table.get_item(Key={
+            'google_user_id': google_user_id,
+        })
+        item = response.get('Item')
+        api_key = item.get('api_key') or None
+    except:
+        try:
+            response = keys_table.scan(
+                FilterExpression="google_user_id = :u",
+                ExpressionAttributeValues={":u": google_user_id}
+            )
+            first_item = response.get("Items", [{}])[0]
+            api_key = first_item.get('api_key') or None
+        except Exception as e:
+            return {
+                "statusCode": 500,
+                "body": f"DynamoDB scan failed: {str(e)}"
+            }
 
-    if items:
-        api_key = items[0]["api_key"]
-    else:
+    if api_key is None:
         api_key = secrets.token_urlsafe(30)  # 40-ish character random string
 
     # Create or update user record
@@ -145,6 +153,15 @@ def lambda_handler(event, context):
             "statusCode": 500,
             "body": f"Failed to store user in DynamoDB: {str(e)}"
         }
+    else:
+        # Attempt to optimize future lookups
+        try:
+            mapping_table.put_item(Item={
+                "google_user_id": google_user_id,
+                "api_key": api_key,
+            })
+        except:
+            pass
 
     # Return dark-themed HTML with API key and curl command
     html = f"""
