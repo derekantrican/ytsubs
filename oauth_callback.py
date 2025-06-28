@@ -123,6 +123,9 @@ def lambda_handler(event, context):
         item = response.get('Item', {})
         api_key = item.get('api_key') or None
     except:
+        pass
+
+    if api_key is None: 
         try:
             response = keys_table.scan(
                 FilterExpression="google_user_id = :u",
@@ -136,6 +139,7 @@ def lambda_handler(event, context):
                 "body": f"DynamoDB scan failed: {str(e)}"
             }
 
+    # Generate a new token
     if api_key is None:
         api_key = secrets.token_urlsafe(30)  # 40-ish character random string
 
