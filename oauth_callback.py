@@ -105,6 +105,7 @@ def lambda_handler(event, context):
             "body": f"Error fetching user profile: {str(e)}"
         }
 
+    email = profile.get("email")
     google_user_id = profile.get("id")
 
     if not google_user_id:
@@ -192,7 +193,7 @@ def lambda_handler(event, context):
         </style>
     </head>
     <body>
-        <h1>Welcome, {html.escape(google_user_id)}</h1>
+        <h1>Welcome, {html.escape(email)}</h1>
         <p>Your API key is:</p>
         <code>{html.escape(api_key)}</code>
 
