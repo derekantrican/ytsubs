@@ -43,7 +43,7 @@ def lambda_handler(event, context):
             "body": "Missing api_key"
         }
 
-    # Look up the user by api_key and validate google_user_id
+    # Look up the user by api_key (or by google_user_id_token if a user cannot be found by api_key)
     user = keys_table.get_item(Key={'api_key': api_key}).get('Item')
     invalid = (
         not user or
