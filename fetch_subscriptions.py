@@ -110,7 +110,14 @@ def lambda_handler(event, context):
                 refresh_token = None
                 if 401 == e.code:
                     refresh_token = token_decrypt(user.get('youtube_refresh_token'))
-                if e.code == 401 and refresh_token:
+                    if not refresh_token:
+                        return {
+                            "statusCode": 500,
+                            "body": json.dumps({
+                                "error": "The YouTube refresh token was not accessible. Please visit https://ytsubs.app and sign in again."
+                            }),
+                            "headers": {"Content-Type": "application/json"}
+                        }
                     new_token = refresh_access_token(refresh_token)
                     if new_token:
                         return fetch_subs(new_token)
@@ -122,7 +129,7 @@ def lambda_handler(event, context):
                             }),
                             "headers": {"Content-Type": "application/json"}
                         }
-                elif e.code == 403:
+                elif 403 == e.code:
                     return {
                         "statusCode": 403,
                         "headers": {"Content-Type": "application/json"},
