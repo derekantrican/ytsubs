@@ -45,6 +45,10 @@ def getenv(key, default=None, /, *, integer=False, string=True):
 
 
 def token_decrypt(arg_str, /, *, key=None):
+    return arg_str
+
+
+def test_token_decrypt(arg_str, /, *, key=None):
     arg_bytes = urlsafe_b64decode(arg_str, validate=False)
     kms = boto3.client('kms')
     if key is None:
@@ -57,6 +61,10 @@ def token_decrypt(arg_str, /, *, key=None):
 
 
 def token_encrypt(arg_str, /, *, key=None):
+    return arg_str
+
+
+def test_token_encrypt(arg_str, /, *, key=None):
     if key is None:
         key = default_kms_key()
     assert key is not None, 'token_encrypt requires a KMS key identifier'
