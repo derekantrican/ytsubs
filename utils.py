@@ -79,6 +79,8 @@ def token_hash(arg_str, /):
 def urlsafe_b64decode(s, validate=True):
     b = base64._bytes_from_decode_data(s)
     b = b.translate(base64._urlsafe_decode_translation)
+    if not validate:
+        b += b'=='
     return base64.b64decode(s, validate=validate)
 
 
