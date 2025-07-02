@@ -45,7 +45,7 @@ def getenv(key, default=None, /, *, integer=False, string=True):
 
 
 def token_decrypt(arg_str, /, *, key=None):
-    arg_bytes = urlsafe_b64decode(arg_str)
+    arg_bytes = urlsafe_b64decode(arg_str, validate=False)
     kms = boto3.client('kms')
     if key is None:
         response = kms.decrypt(CiphertextBlob=arg_bytes)
