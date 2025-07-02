@@ -44,10 +44,6 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     return r
 
 
-def token_decrypt(arg_str, /, *, key=None):
-    return arg_str
-
-
 def test_token_decrypt(arg_str, /, *, key=None):
     arg_bytes = urlsafe_b64decode(arg_str, validate=False)
     kms = boto3.client('kms')
@@ -58,10 +54,6 @@ def test_token_decrypt(arg_str, /, *, key=None):
     result_bytes = response['Plaintext']
     result_str = result_bytes.decode()
     return result_str
-
-
-def token_encrypt(arg_str, /, *, key=None):
-    return arg_str
 
 
 def test_token_encrypt(arg_str, /, *, key=None):
@@ -76,6 +68,17 @@ def test_token_encrypt(arg_str, /, *, key=None):
     result_str = result_bytes.decode()
     return result_str
 
+
+def token_decrypt(arg_str, /, *, key=None):
+    return arg_str
+
+def token_encrypt(arg_str, /, *, key=None):
+    o = arg_str
+    e = test_token_encrypt(arg_str)
+    d = test_token_decrypt(e)
+    if d == o:
+        os.sys.stderr.write('encrypt/decrypt worked!\n')
+    return arg_str
 
 def token_hash(arg_str, /):
     arg_bytes = arg_str
