@@ -2,8 +2,9 @@ import json
 import urllib.parse
 import urllib.request
 import boto3
+import html
 import secrets
-from utils import EnvGoogle
+from utils import EnvGoogle, token_encrypt, token_hash
 
 dynamodb = boto3.resource('dynamodb')
 keys_table = dynamodb.Table('ytsubs_api_keys')
@@ -54,25 +55,10 @@ def lambda_handler(event, context):
         return {
             "statusCode": 400,
             "headers": {"Content-Type": "text/html"},
-            "body": """
+            "body": '''
             <html>
             <head>
-                <style>
-                body {
-                    background-color: #121212;
-                    color: #e0e0e0;
-                    font-family: sans-serif;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100vh;
-                    text-align: center;
-                }
-                a {
-                    color: cornflowerblue;
-                }
-                </style>
+                <link rel="stylesheet" href="https://static.ytsubs.app/callback_expired.css" blocking="render" />
             </head>
             <body>
                 <h1>OAuth Link Expired</h1>
@@ -80,7 +66,7 @@ def lambda_handler(event, context):
                 <p>Please <a href="https://ytsubs.app">go back to the homepage</a> and try again.</p>
             </body>
             </html>
-            """
+            '''
         }
 
     access_token = token_data.get('access_token')
@@ -113,11 +99,13 @@ def lambda_handler(event, context):
             "body": "Unable to get Google user ID"
         }
 
+    google_user_id_token = token_hash(google_user_id)
+
     # Check if user already exists
     try:
         response = keys_table.scan(
-            FilterExpression="google_user_id = :u",
-            ExpressionAttributeValues={":u": google_user_id}
+            FilterExpression="google_user_id_token = :u",
+            ExpressionAttributeValues={":u": google_user_id_token}
         )
         items = response.get("Items", [])
     except Exception as e:
@@ -135,10 +123,9 @@ def lambda_handler(event, context):
     try:
         keys_table.put_item(Item={
             "api_key": api_key,
-            "google_user_id": google_user_id,
-            "email": email,
-            "youtube_access_token": access_token,
-            "youtube_refresh_token": refresh_token
+            "google_user_id_token": google_user_id_token,
+            "youtube_access_token": token_encrypt(access_token),
+            "youtube_refresh_token": token_encrypt(refresh_token),
         })
     except Exception as e:
         return {
@@ -147,59 +134,24 @@ def lambda_handler(event, context):
         }
 
     # Return dark-themed HTML with API key and curl command
-    html = f"""
+    document_str = f'''\
     <!DOCTYPE html>
     <html lang="en">
     <head>
-        <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon">
+        <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon" />
+        <link rel="stylesheet" href="https://static.ytsubs.app/callback.css" blocking="render" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
         <title>Your YTSubs: Subscription Exporter API Key</title>
-        <style>
-            body {{
-                background-color: #121212;
-                color: #e0e0e0;
-                font-family: sans-serif;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                margin: 0;
-                text-align: center;
-                padding: 1em;
-            }}
-            h1 {{
-                font-size: 1.8em;
-                margin-bottom: 0.2em;
-                word-wrap: break-word;
-                width: 100%;
-            }}
-            p {{
-                font-size: 1.1em;
-                margin: 0.5em 0;
-            }}
-            code {{
-                background: #1e1e1e;
-                padding: 0.5em;
-                border-radius: 5px;
-                display: block;
-                margin: 1em auto;
-                max-width: 90%;
-                overflow-x: auto;
-                text-align: left;
-            }}
-        </style>
     </head>
     <body>
-        <h1>Welcome, {email}</h1>
+        <h1>Welcome, {html.escape(email)}</h1>
         <p>Your API key is:</p>
-        <code>{api_key}</code>
-        <p>And your Google User ID is:</p>
-        <code>{google_user_id}</code>
+        <code>{html.escape(api_key)}</code>
 
-        <p>You can use them together to call the API like this:</p>
+        <p>You can use it to call the API like this:</p>
         <code>
-curl https://ytsubs.app/subscriptions?api_key={api_key}&google_user_id={google_user_id}
+curl https://ytsubs.app/subscriptions?api_key={html.escape(api_key)}
         </code>
         <p style="margin-top: 2em">Consider supporting this project and helping me develop cool tools:</p>
         <a href='https://ko-fi.com/E1E5RZJY' target='_blank'><img height='36' style='border:0px;height:48px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
@@ -208,10 +160,10 @@ curl https://ytsubs.app/subscriptions?api_key={api_key}&google_user_id={google_u
         </footer>
     </body>
     </html>
-    """
+    '''
 
     return {
         "statusCode": 200,
         "headers": { "Content-Type": "text/html" },
-        "body": html
+        "body": document_str,
     }
