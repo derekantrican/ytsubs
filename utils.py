@@ -5,6 +5,9 @@ import hashlib
 import os
 
 
+_encrypted_token_prefix = '{encrypted}:'
+
+
 def default_kms_key():
     return 'alias/ytsubs-token-encrypt-key'
 
@@ -44,12 +47,8 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     return r
 
 
-def token_decrypt(arg_str, /, *, key=None):
-    return arg_str
-
-
 def test_token_decrypt(arg_str, /, *, key=None):
-    arg_bytes = urlsafe_b64decode(arg_str, validate=False)
+    arg_bytes = urlsafe_b64decode(arg_str)
     kms = boto3.client('kms')
     if key is None:
         response = kms.decrypt(CiphertextBlob=arg_bytes)
@@ -58,10 +57,6 @@ def test_token_decrypt(arg_str, /, *, key=None):
     result_bytes = response['Plaintext']
     result_str = result_bytes.decode()
     return result_str
-
-
-def token_encrypt(arg_str, /, *, key=None):
-    return arg_str
 
 
 def test_token_encrypt(arg_str, /, *, key=None):
@@ -77,6 +72,23 @@ def test_token_encrypt(arg_str, /, *, key=None):
     return result_str
 
 
+def token_decrypt(arg_str, /, *, key=None):
+    if arg_str.startswith(_encrypted_token_prefix):
+        prefix_len = len(_encrypted_token_prefix)
+        cipher_str = arg_str[ prefix_len :]
+        return test_token_decrypt(cipher_str, key=key)
+    return arg_str
+
+
+def token_encrypt(arg_str, /, *, key=None):
+    o = arg_str
+    e = test_token_encrypt(arg_str, key=key)
+    d = test_token_decrypt(e, key=key)
+    if d == o:
+        return _encrypted_token_prefix + e
+    return arg_str
+
+
 def token_hash(arg_str, /):
     arg_bytes = arg_str
     if isinstance(arg_str, str):
@@ -87,9 +99,7 @@ def token_hash(arg_str, /):
 def urlsafe_b64decode(s, validate=True):
     b = base64._bytes_from_decode_data(s)
     b = b.translate(base64._urlsafe_decode_translation)
-    if not validate:
-        b += b'=='
-    return base64.b64decode(s, validate=validate)
+    return base64.b64decode(b, validate=validate)
 
 
 def urlsafe_b64encode(s):
