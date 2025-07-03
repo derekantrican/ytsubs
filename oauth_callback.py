@@ -106,7 +106,7 @@ def lambda_handler(event, context):
     api_key = None
     try:
         response = mapping_table.get_item(Key={
-            'google_user_id': google_user_id,
+            'google_user_id_token': google_user_id_token,
         })
         item = response.get('Item', {})
         api_key = item.get('api_key') or None
