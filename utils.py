@@ -81,6 +81,8 @@ def token_decrypt(arg_str, /, *, key=None):
 
 
 def token_encrypt(arg_str, /, *, key=None):
+    if arg_str.startswith(_encrypted_token_prefix):
+        return arg_str
     o = arg_str
     e = test_token_encrypt(arg_str, key=key)
     d = test_token_decrypt(e, key=key)
