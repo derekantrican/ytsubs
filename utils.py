@@ -5,6 +5,9 @@ import hashlib
 import os
 
 
+_encrypted_token_prefix = '{encrypted}:'
+
+
 def default_kms_key():
     return 'alias/ytsubs-token-encrypt-key'
 
@@ -70,15 +73,21 @@ def test_token_encrypt(arg_str, /, *, key=None):
 
 
 def token_decrypt(arg_str, /, *, key=None):
+    if arg_str.startswith(_encrypted_token_prefix):
+        prefix_len = len(_encrypted_token_prefix)
+        cipher_str = arg_str[ prefix_len :]
+        return test_token_decrypt(cipher_str)
     return arg_str
+
 
 def token_encrypt(arg_str, /, *, key=None):
     o = arg_str
     e = test_token_encrypt(arg_str)
     d = test_token_decrypt(e)
     if d == o:
-        os.sys.stderr.write('encrypt/decrypt worked!\n')
+        return _encrypted_token_prefix + e
     return arg_str
+
 
 def token_hash(arg_str, /):
     arg_bytes = arg_str
