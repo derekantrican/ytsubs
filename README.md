@@ -50,7 +50,7 @@ ytsubs-lambdas/
 ## 💾 DynamoDB Tables
 
 - `ytsubs_api_keys`  
-  Stores user-specific API keys, Google user IDs, emails, access/refresh tokens
+  Stores user-specific API keys, and YouTube access/refresh tokens
 
 - `ytsubs_subscriptions_cache`  
   Caches YouTube subscription data per user (12-hour TTL)
@@ -61,12 +61,12 @@ ytsubs-lambdas/
 ### 🔹 Authenticate User
 1. Visit [https://ytsubs.app](https://ytsubs.app)
 2. Sign in with Google
-3. Receive API key and user ID
+3. Receive API key
 
 ### 🔹 Get Subscriptions
 
 ```bash
-curl "https://ytsubs.app/subscriptions?api_key=YOUR_API_KEY&google_user_id=YOUR_GOOGLE_USER_ID"
+curl "https://ytsubs.app/subscriptions?api_key=YOUR_API_KEY"
 ````
 
 Returns:

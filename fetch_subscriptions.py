@@ -3,7 +3,7 @@ import datetime
 import urllib.request
 import urllib.parse
 import boto3
-from utils import EnvGoogle
+from utils import EnvGoogle, token_decrypt, token_encrypt, token_hash
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
@@ -12,7 +12,13 @@ keys_table = dynamodb.Table('ytsubs_api_keys')
 def lambda_handler(event, context):
     query_params = event.get('queryStringParameters') or {}
     api_key = query_params.get('api_key')
+
+    # Calculate the google_user_id_token if google_user_id was provided
+    google_user_id_token = query_params.get('google_user_id_token')
     google_user_id = query_params.get('google_user_id')
+    if google_user_id:
+        google_user_id_token = token_hash(google_user_id)
+    google_user_id = None
 
     def now():
         return datetime.datetime.now(tz=datetime.timezone.utc)
@@ -31,18 +37,25 @@ def lambda_handler(event, context):
     def newer_than(arg_dt, /, *args, **kwargs):
         return arg_dt > (now() - datetime.timedelta(*args, **kwargs))
 
-    if not api_key or not google_user_id:
+    if not api_key:
         return {
             "statusCode": 401,
-            "body": "Missing api_key or google_user_id"
+            "body": "Missing api_key"
         }
 
-    # Look up the user by api_key and validate google_user_id
+    # Look up the user by api_key (or by google_user_id_token if a user cannot be found by api_key)
     user = keys_table.get_item(Key={'api_key': api_key}).get('Item')
-    if not user or user.get('google_user_id') != google_user_id:
+    invalid = (
+        not user or
+        (
+            google_user_id_token and
+            google_user_id_token != user.get('google_user_id_token')
+        )
+    )
+    if invalid:
         return {
             "statusCode": 403,
-            "body": "Invalid API key or google_user_id"
+            "body": "Invalid API key"
         }
 
     # Check if data is cached
@@ -60,8 +73,7 @@ def lambda_handler(event, context):
                 })
             }
 
-    access_token = user.get('youtube_access_token')
-    refresh_token = user.get('youtube_refresh_token')
+    access_token = token_decrypt(user.get('youtube_access_token'))
     if not access_token:
         return {
             "statusCode": 401,
@@ -95,7 +107,17 @@ def lambda_handler(event, context):
                     if not next_page_token:
                         break
             except urllib.error.HTTPError as e:
-                if e.code == 401 and refresh_token:
+                refresh_token = None
+                if 401 == e.code:
+                    refresh_token = token_decrypt(user.get('youtube_refresh_token'))
+                    if not refresh_token:
+                        return {
+                            "statusCode": 500,
+                            "body": json.dumps({
+                                "error": "The YouTube refresh token was not accessible. Please visit https://ytsubs.app and sign in again."
+                            }),
+                            "headers": {"Content-Type": "application/json"}
+                        }
                     new_token = refresh_access_token(refresh_token)
                     if new_token:
                         return fetch_subs(new_token)
@@ -107,7 +129,7 @@ def lambda_handler(event, context):
                             }),
                             "headers": {"Content-Type": "application/json"}
                         }
-                elif e.code == 403:
+                elif 403 == e.code:
                     return {
                         "statusCode": 403,
                         "headers": {"Content-Type": "application/json"},
@@ -133,7 +155,7 @@ def lambda_handler(event, context):
                 token_data = json.loads(resp.read().decode())
                 new_token = token_data.get("access_token")
                 if new_token:
-                    user['youtube_access_token'] = new_token
+                    user['youtube_access_token'] = token_encrypt(new_token)
                     keys_table.put_item(Item=user)
                     return new_token
         except Exception as e:
