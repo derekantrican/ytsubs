@@ -148,7 +148,7 @@ def lambda_handler(event, context):
         # Attempt to optimize future lookups
         try:
             mapping_table.put_item(Item={
-                "google_user_id": google_user_id,
+                "google_user_id_token": google_user_id_token,
                 "api_key": api_key,
             })
         except:
