@@ -185,10 +185,6 @@ def lambda_handler(event, context):
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps({
             "lastRetrievalDate": datetime_to_json(now_dt),
-            "youtube_access_token": user.get('youtube_access_token'),
-            "compatible": token_decrypt(user.get('youtube_access_token')),
-            "encrypted": token_encrypt(user.get('youtube_access_token')),
-            "decrypted": token_decrypt(token_encrypt(user.get('youtube_access_token'))),
             "subscriptions": all_subs
         })
     }
