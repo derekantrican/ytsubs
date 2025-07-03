@@ -101,6 +101,7 @@ def lambda_handler(event, context):
         }
 
     google_user_id_token = token_hash(google_user_id)
+    google_user_id = None
 
     # Check if user already exists
     api_key = None
