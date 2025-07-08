@@ -41,9 +41,9 @@ graph TD
 
 ```
 ytsubs-lambdas/
-├── fetch\_subscriptions.py     # Lambda for /subscriptions
-├── oauth\_start.py             # Lambda for / (homepage)
-├── oauth\_callback.py          # Lambda for /auth/callback
+├── fetch_subscriptions.py     # Lambda for /subscriptions
+├── oauth_start.py             # Lambda for / (homepage)
+├── oauth_callback.py          # Lambda for /auth/callback
 ├── static/                     # Static sources such as images & privacy policy
 └── .github/
    └── workflows/
