@@ -1,3 +1,7 @@
+<p align="center">
+  <img height="300" width="300" src="/static/logo.png" alt="YTSubs.app" />
+</p>
+
 # YTSubs: YouTube Subscriptions Exporter API Service
 
 YTSubs is a serverless web service that allows users to authenticate with their Google account and securely retrieve a cached list of their YouTube subscriptions. This system is powered by AWS Lambda, API Gateway, DynamoDB, and GitHub Actions for continuous deployment.
@@ -37,9 +41,9 @@ graph TD
 
 ```
 ytsubs-lambdas/
-├── fetch\_subscriptions.py     # Lambda for /subscriptions
-├── oauth\_start.py             # Lambda for / (homepage)
-├── oauth\_callback.py          # Lambda for /auth/callback
+├── fetch_subscriptions.py     # Lambda for /subscriptions
+├── oauth_start.py             # Lambda for / (homepage)
+├── oauth_callback.py          # Lambda for /auth/callback
 ├── static/                     # Static sources such as images & privacy policy
 └── .github/
    └── workflows/
