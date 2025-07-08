@@ -5,6 +5,9 @@ import hashlib
 import os
 
 
+_encrypted_token_prefix = '{encrypted}:'
+
+
 def default_kms_key():
     return 'alias/ytsubs-token-encrypt-key'
 
@@ -45,11 +48,12 @@ def getenv(key, default=None, /, *, integer=False, string=True):
 
 
 def token_decrypt(arg_str, /, *, key=None):
-    return arg_str
-
-
-def test_token_decrypt(arg_str, /, *, key=None):
-    arg_bytes = urlsafe_b64decode(arg_str, validate=False)
+    # not marked as encrypted
+    if not arg_str.startswith(_encrypted_token_prefix):
+        return arg_str
+    # decrypt the string without the prefix
+    prefix_len = len(_encrypted_token_prefix)
+    arg_bytes = urlsafe_b64decode(arg_str[ prefix_len :])
     kms = boto3.client('kms')
     if key is None:
         response = kms.decrypt(CiphertextBlob=arg_bytes)
@@ -61,10 +65,10 @@ def test_token_decrypt(arg_str, /, *, key=None):
 
 
 def token_encrypt(arg_str, /, *, key=None):
-    return arg_str
-
-
-def test_token_encrypt(arg_str, /, *, key=None):
+    o = arg_str
+    # already marked as encrypted
+    if arg_str.startswith(_encrypted_token_prefix):
+        return arg_str
     if key is None:
         key = default_kms_key()
     assert key is not None, 'token_encrypt requires a KMS key identifier'
@@ -74,7 +78,12 @@ def test_token_encrypt(arg_str, /, *, key=None):
     encrypted_bytes = response['CiphertextBlob']
     result_bytes = urlsafe_b64encode(encrypted_bytes)
     result_str = result_bytes.decode()
-    return result_str
+    e = _encrypted_token_prefix + result_str
+    # verify that we can decrypt the result
+    d = token_decrypt(e, key=key)
+    if d == o:
+        return e
+    return o
 
 
 def token_hash(arg_str, /):
@@ -87,9 +96,7 @@ def token_hash(arg_str, /):
 def urlsafe_b64decode(s, validate=True):
     b = base64._bytes_from_decode_data(s)
     b = b.translate(base64._urlsafe_decode_translation)
-    if not validate:
-        b += b'=='
-    return base64.b64decode(s, validate=validate)
+    return base64.b64decode(b, validate=validate)
 
 
 def urlsafe_b64encode(s):
