@@ -89,7 +89,7 @@ def lambda_handler(event, context):
         if newer_than(last_updated, hours=12):
             log.debug('cache entry was fresh')
             # Data is compressed & encoded to save space
-            log.debug(f'stored_size={len(str( cache['data'] ))}')
+            log.debug(f"stored_size={len(str( cache['data'] ))}")
             all_subs = decode_and_decompress(cache['data'])
             subs_count = len(all_subs)
             log.debug(f'{subs_count=}')
