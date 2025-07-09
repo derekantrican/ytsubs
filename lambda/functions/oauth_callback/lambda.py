@@ -9,7 +9,7 @@ from utils import EnvGoogle, token_encrypt, token_hash
 dynamodb = boto3.resource('dynamodb')
 keys_table = dynamodb.Table('ytsubs_api_keys')
 
-def lambda_handler(event, context):
+def handler(event, context):
     params = event.get('queryStringParameters') or {}
     code = params.get('code')
     if not code:
