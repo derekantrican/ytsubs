@@ -174,8 +174,8 @@ def lambda_handler(event, context):
         }
 
     # Save new data to cache
-    encoded_data = compress_and_encode(all_subs) # Data is compressed & encoded to save space
     try:
+        encoded_data = compress_and_encode(all_subs) # Data is compressed & encoded to save space
         subs_table.put_item(Item={
             "api_key": api_key,
             "last_updated": datetime_to_json(now_dt),
