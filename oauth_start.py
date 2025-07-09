@@ -30,17 +30,11 @@ def lambda_handler(event, context):
   "lastRetrievalDate": "2025-06-10T01:32:08.355395Z",
   "subscriptions": [
     {
-      "kind": "youtube#subscription",
-      "etag": "mep1K4OBALF4wrTFaXIYU-_xnsU",
       "id": "CWE0Bb1OftIKrp8FAk4EYe_MiDVd-mT-5vdiIOY_LVs",
       "snippet": {
         "publishedAt": "2018-01-03T21:42:30.834186Z",
         "title": "Mark Rober",
         "description": "Former NASA engineer. Current CrunchLabs founder and friend of science...",
-        "resourceId": {
-          "kind": "youtube#channel",
-          "channelId": "UCY1kMZp36IQSyNx_9h4mpCg"
-        },
         "channelId": "UCPJHnEGx82NVaeJCYM_PFJg",
         "thumbnails": {
           "default": {
