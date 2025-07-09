@@ -2,7 +2,7 @@ import html
 import urllib.parse
 from utils import EnvGoogle
 
-def lambda_handler(event, context):
+def handler(event, context):
     api_auth_base_url = 'https://www.googleapis.com/auth'
     oauth_base_url = 'https://accounts.google.com/o/oauth2/v2/auth'
 
