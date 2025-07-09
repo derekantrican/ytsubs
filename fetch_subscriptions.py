@@ -190,7 +190,8 @@ def lambda_handler(event, context):
                     keys_table.put_item(Item=user)
                     return new_token
         except Exception as e:
-            print(f"Failed to refresh token: {e}")
+            log.exception(e)
+            log.error('Failed to refresh token')
         return None
 
     try:
