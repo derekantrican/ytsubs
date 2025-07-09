@@ -9,7 +9,7 @@ dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
 keys_table = dynamodb.Table('ytsubs_api_keys')
 
-def lambda_handler(event, context):
+def handler(event, context):
     query_params = event.get('queryStringParameters') or {}
     api_key = query_params.get('api_key')
 
