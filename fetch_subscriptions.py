@@ -182,11 +182,17 @@ def lambda_handler(event, context):
             "data": encoded_data,
         })
     except Exception as e:
+        subs_count = '?'
+        try:
+            subs_count = len(all_subs)
+        except:
+            subs_count = str(type(all_subs))
         return {
             "statusCode": 500,
+            "headers": {"Content-Type": "application/json"},
             "body": json.dumps({
                 'msg': 'Error caching subscriptions.',
-                'subscriptions_count': len(all_subs),
+                'subscriptions_count': subs_count,
                 'exc': str(e),
             }),
         }
