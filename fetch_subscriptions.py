@@ -239,7 +239,7 @@ def lambda_handler(event, context):
     if 'False2' == query_params.get('save_cache', ''):
         return {
             "statusCode": 200,
-            "body": "made it past fetching subscriptions",
+            "body": "made it past counting subscriptions",
         }
     if 'False3' == query_params.get('save_cache', ''):
         return {
@@ -249,6 +249,11 @@ def lambda_handler(event, context):
         #raise Exception(f'save_cache: {subs_count=}')
     try:
         log.debug('storing cached subscriptions')
+        if 'False4' == query_params.get('save_cache', ''):
+            return {
+                "statusCode": 200,
+                "body": "made it to cached subscriptions",
+            }
         cached_subs = [
             {
                 k: {
@@ -261,19 +266,39 @@ def lambda_handler(event, context):
             }
             for s in all_subs
         ]
+        if 'False5' == query_params.get('save_cache', ''):
+            return {
+                "statusCode": 200,
+                "body": "made it past cached subscriptions",
+            }
         # Data is compressed & encoded to save space
         encoded_data = compress_and_encode(cached_subs)
+        if 'False6' == query_params.get('save_cache', ''):
+            return {
+                "statusCode": 200,
+                "body": "made it past encoded subscriptions",
+            }
         subs_table.put_item(Item={
             "api_key": api_key,
             "last_updated": datetime_to_json(now_dt),
             "data": encoded_data,
         })
+        if 'False7' == query_params.get('save_cache', ''):
+            return {
+                "statusCode": 200,
+                "body": "made it past put encoded subscriptions",
+            }
     except Exception as e:
         log.exception(e)
         log.debug('returning 500 and JSON')
         body = json.dumps({
             'msg': 'Error caching subscriptions.',
         })
+        if 'False8' == query_params.get('save_cache', ''):
+            return {
+                "statusCode": 200,
+                "body": "made it to try block in exception",
+            }
         try:
             body = json.dumps({
                 'msg': 'Error caching subscriptions.',
@@ -282,6 +307,11 @@ def lambda_handler(event, context):
             })
         except Exception as ee:
             log.exception(ee)
+        if 'False9' == query_params.get('save_cache', ''):
+            return {
+                "statusCode": 200,
+                "body": "made it past try block in exception",
+            }
         return {
             "statusCode": 500,
             "headers": {"Content-Type": "application/json"},
