@@ -164,7 +164,6 @@ def lambda_handler(event, context):
 
     try:
         all_subs = fetch_subs(access_token)
-        print(f"{len(all_subs)} subscriptions grabbed")
         if isinstance(all_subs, dict) and all_subs.get("statusCode") == 403:
             return all_subs
     except Exception as e:
@@ -177,6 +176,7 @@ def lambda_handler(event, context):
     subs_count = '?'
     try:
         subs_count = len(all_subs)
+        print(f"{subs_count} subscriptions grabbed")
     except Exception as e:
         subs_count = f'type={type(all_subs)} {e=}'
     try:
