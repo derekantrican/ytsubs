@@ -104,7 +104,7 @@ def urlsafe_b64encode(s):
 
 
 def compress_and_encode(data):
-    cleaned = [
+    cleaned = [ # Removing some "extra" props from the YouTube data structure to save on DB space (etag, kind, & resourceId)
         {
             "id": item.get("id"),
             "snippet": {
