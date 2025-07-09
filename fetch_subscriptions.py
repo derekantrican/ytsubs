@@ -188,6 +188,8 @@ def lambda_handler(event, context):
     except Exception as e:
         subs_count = f'type={type(all_subs)} {e=}'
     try:
+        if 'False' == query_params.get('save_cache', ''):
+            raise Exception(f'save_cache: {subs_count=}')
         cached_subs = [
             {
                 k: {
