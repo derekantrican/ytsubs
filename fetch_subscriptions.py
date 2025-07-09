@@ -173,6 +173,17 @@ def lambda_handler(event, context):
             "body": f"Error fetching from YouTube: {str(e)}"
         }
 
+    if 'True' == query_params.get('skip_cache', ''):
+        return {
+            "statusCode": 200,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({
+                "lastRetrievalDate": datetime_to_json(now_dt),
+                'subscriptions_count': len(all_subs),
+                "subscriptions": all_subs,
+            }),
+        }
+        
     # Save new data to cache
     encoded_data = compress_and_encode(all_subs) # Data is compressed & encoded to save space
     try:
