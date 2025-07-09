@@ -3,7 +3,7 @@ import datetime
 import urllib.request
 import urllib.parse
 import boto3
-from utils import EnvGoogle, token_decrypt, token_encrypt, token_hash
+from utils import EnvGoogle, token_decrypt, token_encrypt, token_hash, compress_and_encode, decode_and_decompress
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
@@ -69,7 +69,7 @@ def lambda_handler(event, context):
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps({
                     "lastRetrievalDate": datetime_to_json(last_updated),
-                    "subscriptions": json.loads(cache['data'])
+                    "subscriptions": decode_and_decompress(cache['data']) # Data is compressed & encoded to save space
                 })
             }
 
@@ -173,11 +173,11 @@ def lambda_handler(event, context):
         }
 
     # Save new data to cache
-    response_data = json.dumps(all_subs)
+    encoded_data = compress_and_encode(all_subs) # Data is compressed & encoded to save space
     subs_table.put_item(Item={
         "api_key": api_key,
         "last_updated": datetime_to_json(now_dt),
-        "data": response_data
+        "data": encoded_data
     })
 
     return {
