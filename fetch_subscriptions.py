@@ -173,7 +173,20 @@ def lambda_handler(event, context):
         }
 
     # Save new data to cache
-    response_data = json.dumps(all_subs)
+    cached_subs = [
+        {
+            k: {
+                kk: truncate(vv, 256)
+                if kk == 'description' else vv
+                for kk,vv in v.items()
+            }
+            if 'snippet' == k else v
+            for k,v in s.items()
+        }
+        for s in all_subs
+    ]
+    
+    response_data = json.dumps(cached_subs)
     subs_table.put_item(Item={
         "api_key": api_key,
         "last_updated": datetime_to_json(now_dt),
