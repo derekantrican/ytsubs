@@ -64,12 +64,16 @@ def lambda_handler(event, context):
     if cache and 'True' != query_params.get('skip_cache', ''):
         last_updated = datetime_from_db(cache['last_updated'])
         if newer_than(last_updated, hours=12):
+            # Data is compressed & encoded to save space
+            all_subs = decode_and_decompress(cache['data'])
+            subs_count = len(all_subs)
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps({
                     "lastRetrievalDate": datetime_to_json(last_updated),
-                    "subscriptions": decode_and_decompress(cache['data']) # Data is compressed & encoded to save space
+                    'subscriptions_count': subs_count,
+                    "subscriptions": all_subs,
                 })
             }
 
