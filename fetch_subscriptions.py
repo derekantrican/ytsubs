@@ -196,6 +196,7 @@ def lambda_handler(event, context):
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps({
             "lastRetrievalDate": datetime_to_json(now_dt),
+            'subscriptions_count': len(all_subs),
             "subscriptions": all_subs
         })
     }
