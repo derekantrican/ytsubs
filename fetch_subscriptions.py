@@ -3,7 +3,7 @@ import datetime
 import urllib.request
 import urllib.parse
 import boto3
-from utils import EnvGoogle, token_decrypt, token_encrypt, token_hash
+from utils import EnvGoogle, token_decrypt, token_encrypt, token_hash, compress_and_encode, decode_and_decompress
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
@@ -61,15 +61,19 @@ def lambda_handler(event, context):
     # Check if data is cached
     now_dt = now()
     cache = subs_table.get_item(Key={'api_key': api_key}).get('Item')
-    if cache:
+    if cache and 'True' != query_params.get('skip_cache', ''):
         last_updated = datetime_from_db(cache['last_updated'])
         if newer_than(last_updated, hours=12):
+            # Data is compressed & encoded to save space
+            all_subs = decode_and_decompress(cache['data'])
+            subs_count = len(all_subs)
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps({
                     "lastRetrievalDate": datetime_to_json(last_updated),
-                    "subscriptions": json.loads(cache['data'])
+                    'subscriptions_count': subs_count,
+                    "subscriptions": all_subs,
                 })
             }
 
@@ -173,31 +177,49 @@ def lambda_handler(event, context):
         }
 
     # Save new data to cache
-    cached_subs = [
-        {
-            k: {
-                kk: truncate(vv, 256)
-                if kk == 'description' else vv
-                for kk,vv in v.items()
+    subs_count = '?'
+    try:
+        subs_count = len(all_subs)
+        print(f"{subs_count} subscriptions grabbed")
+    except Exception as e:
+        subs_count = f'type={type(all_subs)} {e=}'
+    try:
+        cached_subs = [
+            {
+                k: {
+                    kk: truncate(vv, 256)
+                    if kk == 'description' else vv
+                    for kk,vv in v.items()
+                }
+                if 'snippet' == k else v
+                for k,v in s.items()
             }
-            if 'snippet' == k else v
-            for k,v in s.items()
+            for s in all_subs
+        ]
+        # Data is compressed & encoded to save space
+        encoded_data = compress_and_encode(cached_subs)
+        subs_table.put_item(Item={
+            "api_key": api_key,
+            "last_updated": datetime_to_json(now_dt),
+            "data": encoded_data,
+        })
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({
+                'msg': 'Error caching subscriptions.',
+                'subscriptions_count': subs_count,
+                'exc': str(e),
+            }),
         }
-        for s in all_subs
-    ]
-    
-    response_data = json.dumps(cached_subs)
-    subs_table.put_item(Item={
-        "api_key": api_key,
-        "last_updated": datetime_to_json(now_dt),
-        "data": response_data
-    })
 
     return {
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps({
             "lastRetrievalDate": datetime_to_json(now_dt),
-            "subscriptions": all_subs
+            'subscriptions_count': subs_count,
+            "subscriptions": all_subs,
         })
     }
