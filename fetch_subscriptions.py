@@ -194,6 +194,11 @@ def lambda_handler(event, context):
             log.error('Failed to refresh token')
         return None
 
+    if 'False' == query_params.get('fetch_subs', ''):
+        return {
+            "statusCode": 200,
+            "body": "made it to fetching subscriptions",
+        }
     try:
         log.debug('fetching subscriptions')
         all_subs = fetch_subs(access_token)
