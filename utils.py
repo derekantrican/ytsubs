@@ -1,16 +1,16 @@
 import base64
 import boto3
 import collections
-import hashlib
-import os
 import gzip
+import hashlib
 import json
+import os
 
 _encrypted_token_prefix = '{encrypted}:'
 
 
 def default_kms_key():
-    return 'alias/ytsubs-token-encrypt-key'
+    return getenv('YTSUBS_KMS_KEY', 'alias/ytsubs-token-encrypt-key')
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
@@ -105,14 +105,14 @@ def urlsafe_b64encode(s):
 
 
 def compress_and_encode(data):
-    cleaned = [ # Removing some "extra" props from the YouTube data structure to save on DB space (etag, kind, & resourceId)
+    cleaned = [ # Removing some "extra" props from the YouTube data structure to save on DB space (etag, kind, & channelId)
         {
             "id": item.get("id"),
             "snippet": {
                 "publishedAt": item["snippet"].get("publishedAt"),
                 "title": item["snippet"].get("title"),
                 "description": item["snippet"].get("description"),
-                "channelId": item["snippet"].get("channelId"),
+                "resourceId": item["snippet"].get("resourceId"),
                 "thumbnails": item["snippet"].get("thumbnails")
             }
         }
@@ -120,11 +120,11 @@ def compress_and_encode(data):
     ]
     json_data = json.dumps(cleaned).encode('utf-8')
     compressed = gzip.compress(json_data)
-    return base64.b64encode(compressed).decode('utf-8')
+    return urlsafe_b64encode(compressed).decode('utf-8')
 
 
 def decode_and_decompress(b64_data):
-    compressed = base64.b64decode(b64_data)
+    compressed = urlsafe_b64decode(b64_data)
     json_data = gzip.decompress(compressed)
     return json.loads(json_data)
 
