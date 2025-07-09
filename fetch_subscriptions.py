@@ -173,7 +173,7 @@ def lambda_handler(event, context):
         }
 
     # Record the number of subscriptions
-    if isinstance(all_subs, dict):
+    if isinstance(all_subs, list):
         user['subscriptions'] = len(all_subs)
         keys_table.put_item(Item=user)
 
