@@ -3,7 +3,9 @@ import datetime
 import urllib.request
 import urllib.parse
 import boto3
-from utils import EnvGoogle, token_decrypt, token_encrypt, token_hash
+from utils import (
+    EnvGoogle, token_decrypt, token_encrypt, token_hash, truncate,
+)
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
