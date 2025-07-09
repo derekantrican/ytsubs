@@ -175,11 +175,21 @@ def lambda_handler(event, context):
 
     # Save new data to cache
     encoded_data = compress_and_encode(all_subs) # Data is compressed & encoded to save space
-    subs_table.put_item(Item={
-        "api_key": api_key,
-        "last_updated": datetime_to_json(now_dt),
-        "data": encoded_data
-    })
+    try:
+        subs_table.put_item(Item={
+            "api_key": api_key,
+            "last_updated": datetime_to_json(now_dt),
+            "data": encoded_data,
+        })
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({
+                'msg': 'Error caching subscriptions.',
+                'subscriptions_count': len(all_subs),
+                'exc': str(e),
+            }),
+        }
 
     return {
         "statusCode": 200,
