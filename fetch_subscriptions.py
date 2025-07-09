@@ -3,7 +3,11 @@ import datetime
 import urllib.request
 import urllib.parse
 import boto3
-from utils import EnvGoogle, token_decrypt, token_encrypt, token_hash, compress_and_encode, decode_and_decompress
+from utils import (
+    EnvGoogle,
+    compress_and_encode, decode_and_decompress,
+    token_decrypt, token_encrypt, token_hash, truncate,
+)
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
@@ -184,8 +188,20 @@ def lambda_handler(event, context):
     except Exception as e:
         subs_count = f'type={type(all_subs)} {e=}'
     try:
+        cached_subs = [
+            {
+                k: {
+                    kk: truncate(vv, 256)
+                    if kk == 'description' else vv
+                    for kk,vv in v.items()
+                }
+                if 'snippet' == k else v
+                for k,v in s.items()
+            }
+            for s in all_subs
+        ]
         # Data is compressed & encoded to save space
-        encoded_data = compress_and_encode(all_subs)
+        encoded_data = compress_and_encode(cached_subs)
         subs_table.put_item(Item={
             "api_key": api_key,
             "last_updated": datetime_to_json(now_dt),
