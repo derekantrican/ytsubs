@@ -1,13 +1,26 @@
-import json
-import datetime
-import urllib.request
-import urllib.parse
 import boto3
+import datetime
+import json
+import logging
+import urllib.parse
+import urllib.request
 from utils import (
     EnvGoogle,
-    compress_and_encode, decode_and_decompress,
+    compress_and_encode, decode_and_decompress, getenv,
     token_decrypt, token_encrypt, token_hash, truncate,
 )
+
+# Configure logging to sys.stderr
+log = logging.getLogger(__name__)
+_handler = logging.StreamHandler()
+_handler.setLevel(logging.DEBUG)
+log.addHandler(_handler)
+del _handler
+try:
+    # set LOG_LEVEL to the minimum level that you wish to see
+    log.setLevel(getenv('LOG_LEVEL', logging.DEBUG))
+except ValueError:
+    log.setLevel(logging.DEBUG)
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
@@ -22,6 +35,7 @@ def lambda_handler(event, context):
     google_user_id = query_params.get('google_user_id')
     if google_user_id:
         google_user_id_token = token_hash(google_user_id)
+        log.debug(f'{google_user_id_token=}')
     google_user_id = None
 
     def now():
@@ -42,6 +56,7 @@ def lambda_handler(event, context):
         return arg_dt > (now() - datetime.timedelta(*args, **kwargs))
 
     if not api_key:
+        log.debug('missing api_key')
         return {
             "statusCode": 401,
             "body": "Missing api_key"
@@ -57,6 +72,7 @@ def lambda_handler(event, context):
         )
     )
     if invalid:
+        log.debug(f'invalid api_key: {api_key}')
         return {
             "statusCode": 403,
             "body": "Invalid API key"
@@ -64,13 +80,19 @@ def lambda_handler(event, context):
 
     # Check if data is cached
     now_dt = now()
+    log.debug(f'{now_dt=}')
+    log.debug('reading from cache table')
     cache = subs_table.get_item(Key={'api_key': api_key}).get('Item')
     if cache and 'True' != query_params.get('skip_cache', ''):
+        log.debug('has a cache entry')
         last_updated = datetime_from_db(cache['last_updated'])
         if newer_than(last_updated, hours=12):
+            log.debug('cache entry was fresh')
             # Data is compressed & encoded to save space
+            log.debug(f'stored_size={len(str( cache['data'] ))}')
             all_subs = decode_and_decompress(cache['data'])
             subs_count = len(all_subs)
+            log.debug(f'{subs_count=}')
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
@@ -83,6 +105,7 @@ def lambda_handler(event, context):
 
     access_token = token_decrypt(user.get('youtube_access_token'))
     if not access_token:
+        log.debug('no access_token available')
         return {
             "statusCode": 401,
             "body": "No YouTube token available for this user"
@@ -171,10 +194,13 @@ def lambda_handler(event, context):
         return None
 
     try:
+        log.debug('fetching subscriptions')
         all_subs = fetch_subs(access_token)
         if isinstance(all_subs, dict) and all_subs.get("statusCode") == 403:
+            log.debug('returned 403')
             return all_subs
     except Exception as e:
+        log.exception(e)
         return {
             "statusCode": 500,
             "body": f"Error fetching from YouTube: {str(e)}"
@@ -183,8 +209,9 @@ def lambda_handler(event, context):
     # Save new data to cache
     subs_count = '?'
     try:
+        log.debug(f'all_subs_type={type(all_subs)}')
         subs_count = len(all_subs)
-        print(f"{subs_count} subscriptions grabbed")
+        log.info(f"{subs_count} subscriptions grabbed")
     except Exception as e:
         subs_count = f'type={type(all_subs)} {e=}'
     try:
@@ -210,16 +237,26 @@ def lambda_handler(event, context):
             "data": encoded_data,
         })
     except Exception as e:
-        return {
-            "statusCode": 500,
-            "headers": {"Content-Type": "application/json"},
-            "body": json.dumps({
+        log.exception(e)
+        log.debug('returning 500 and JSON')
+        body = json.dumps({
+            'msg': 'Error caching subscriptions.',
+        })
+        try:
+            body = json.dumps({
                 'msg': 'Error caching subscriptions.',
                 'subscriptions_count': subs_count,
                 'exc': str(e),
-            }),
+            })
+        except Exception as ee:
+            log.exception(ee)
+        return {
+            "statusCode": 500,
+            "headers": {"Content-Type": "application/json"},
+            "body": body,
         }
 
+    log.debug('returning 200 and JSON')
     return {
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
