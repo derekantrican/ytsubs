@@ -223,6 +223,11 @@ def lambda_handler(event, context):
             "body": body,
         }
 
+    if 'False1' == query_params.get('save_cache', ''):
+        return {
+            "statusCode": 200,
+            "body": "made it past fetching subscriptions",
+        }
     # Save new data to cache
     subs_count = '?'
     try:
@@ -231,7 +236,12 @@ def lambda_handler(event, context):
         log.info(f"{subs_count} subscriptions grabbed")
     except Exception as e:
         subs_count = f'type={type(all_subs)} {e=}'
-    if 'False' == query_params.get('save_cache', ''):
+    if 'False2' == query_params.get('save_cache', ''):
+        return {
+            "statusCode": 200,
+            "body": "made it past fetching subscriptions",
+        }
+    if 'False3' == query_params.get('save_cache', ''):
         return {
             "statusCode": 200,
             "body": f"{subs_count} subscriptions grabbed",
