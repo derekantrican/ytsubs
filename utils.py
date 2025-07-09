@@ -4,6 +4,7 @@ import collections
 import hashlib
 import os
 import gzip
+import json
 
 _encrypted_token_prefix = '{encrypted}:'
 
