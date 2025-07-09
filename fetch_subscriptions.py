@@ -201,9 +201,20 @@ def lambda_handler(event, context):
             return all_subs
     except Exception as e:
         log.exception(e)
+        body = json.dumps({
+            'msg': 'Error fetching from YouTube.',
+        })
+        try:
+            body = json.dumps({
+                'msg': 'Error fetching from YouTube.',
+                'exc': str(e),
+            })
+        except Exception as ee:
+            log.exception(ee)
         return {
             "statusCode": 500,
-            "body": f"Error fetching from YouTube: {str(e)}"
+            "headers": {"Content-Type": "application/json"},
+            "body": body,
         }
 
     # Save new data to cache
@@ -217,6 +228,7 @@ def lambda_handler(event, context):
     try:
         if 'False' == query_params.get('save_cache', ''):
             raise Exception(f'save_cache: {subs_count=}')
+        log.debug('storing cached subscriptions')
         cached_subs = [
             {
                 k: {
