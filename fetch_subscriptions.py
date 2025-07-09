@@ -172,6 +172,11 @@ def lambda_handler(event, context):
             "body": f"Error fetching from YouTube: {str(e)}"
         }
 
+    # Record the number of subscriptions
+    if isinstance(all_subs, dict):
+        user['subscriptions'] = len(all_subs)
+        keys_table.put_item(Item=user)
+
     # Save new data to cache
     response_data = json.dumps(all_subs)
     subs_table.put_item(Item={
