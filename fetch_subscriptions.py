@@ -228,7 +228,11 @@ def lambda_handler(event, context):
         subs_count = f'type={type(all_subs)} {e=}'
     try:
         if 'False' == query_params.get('save_cache', ''):
-            raise Exception(f'save_cache: {subs_count=}')
+            return {
+                "statusCode": 200,
+                "body": f"{subs_count} subscriptions grabbed",
+            }
+            #raise Exception(f'save_cache: {subs_count=}')
         log.debug('storing cached subscriptions')
         cached_subs = [
             {
