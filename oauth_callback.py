@@ -122,11 +122,8 @@ def lambda_handler(event, context):
             )
             first_item = response.get("Items", [{}])[0]
             api_key = first_item.get('api_key') or None
-        except Exception as e:
-            return {
-                "statusCode": 500,
-                "body": f"DynamoDB scan failed: {str(e)}"
-            }
+        except:
+            pass
 
     # Generate a new token
     if api_key is None:
