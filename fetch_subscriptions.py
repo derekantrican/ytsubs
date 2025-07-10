@@ -75,7 +75,7 @@ def lambda_handler(event, context):
     # Check if data is cached
     now_dt = dt_now()
     cache = subs_table.get_item(Key={'api_key': f'{api_key},pages'}).get('Item')
-    if cache:
+    if cache and 'True' != query_params.get('skip_cache', ''):
         # check that the cache is fresh
         last_updated = dt_from_db(cache['last_updated'])
         if newer_than(last_updated, hours=12, now_dt=now_dt):
