@@ -76,6 +76,11 @@ def lambda_handler(event, context):
                 200,
                 dict(user=user.get('google_user_id_token')) | client.describe_time_to_live(TableName=table_name),
             )
+        elif 'L' == query_params.get('cache_ttl'):
+            return response(
+                200,
+                client.list_tables(),
+            )
         elif (v := query_params.get('cache_ttl')) in ('C', 'E',):
             if user.get('google_user_id_token') not in users:
                 return response(403, dict(error='Not Authorized'))
