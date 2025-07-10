@@ -5,7 +5,7 @@ import urllib.parse
 import urllib.request
 from utils import (
     EnvGoogle,
-    data_compress, data_decompress,
+    data_compress, data_decompress, # nowa: F401
     dt_from_db, dt_now, dt_to_db, dt_to_json,
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
@@ -220,7 +220,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
                     data = json.loads(json_bytes.decode())
                     all_subs.extend(data.get('items', []))
                     next_page_token = data.get('nextPageToken')
-                    if not next_page_token:
+                    if not next_page_token or page >= 5:
                         pages.put_item(Item={
                             'api_key': f'{api_key},pages',
                             'last_updated': last_updated,
