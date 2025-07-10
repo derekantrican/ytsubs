@@ -33,16 +33,6 @@ def lambda_handler(event, context):
     query_params = event.get('queryStringParameters') or {}
     api_key = query_params.get('api_key')
 
-    if 'Q' == query_params.get('cache_ttl'):
-        try:
-            client = boto3.client('dynamodb')
-            return response(
-                200,
-                client.describe_time_to_live(TableName='ytsubs_subscriptions_cache'),
-            )
-        except Exception as e:
-            return response(500, dict(msg='An exception occurred.', exc=str(e)))
-
     # Calculate the google_user_id_token if google_user_id was provided
     google_user_id_token = query_params.get('google_user_id_token')
     google_user_id = query_params.get('google_user_id')
@@ -73,6 +63,29 @@ def lambda_handler(event, context):
         log.debug('no access_token available')
         msg = 'No YouTube token available for this user'
         return response(401, dict(error=msg))
+
+    try:
+        client = boto3.client('dynamodb')
+        attr_name = 'expire_at_ts'
+        table_name = 'ytsubs_subscriptions_cache'
+        if 'Q' == query_params.get('cache_ttl'):
+            return response(
+                200,
+                dict(user=user.get('google_user_id_token')) | client.describe_time_to_live(TableName=table_name),
+            )
+        elif (v := query_params.get('cache_ttl')) in ('C', 'E',):
+            return response(
+                200,
+                client.update_time_to_live(
+                    TableName=table_name,
+                    TimeToLiveSpecification={
+                        'Enabled': True if 'E' == v else False,
+                        'AttributeName': attr_name,
+                    },
+                )
+            )
+    except Exception as e:
+        return response(500, dict(msg='An exception occurred.', exc=str(e)))
 
     # Check if data is cached
     now_dt = dt_now()
