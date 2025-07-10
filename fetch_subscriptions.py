@@ -4,7 +4,7 @@ import logging
 import urllib.parse
 import urllib.request
 from utils import (
-    EnvGoogle,
+    EnvGoogle, JSONEncoder,
     data_compress, data_decompress, # noqa: F401
     dt_from_db, dt_now, dt_to_db, dt_to_json,
     expire_after, newer_than,
@@ -185,7 +185,7 @@ def response(status, arg_dict, /):
         return {
             'statusCode': int(status),
             'headers': {'Content-Type': 'application/json'},
-            'body': json.dumps(arg_dict),
+            'body': json.dumps(arg_dict, cls=JSONEncoder),
         }
     except Exception as e:
         log.exception(e)
