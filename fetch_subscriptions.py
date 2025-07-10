@@ -65,18 +65,25 @@ def lambda_handler(event, context):
 
     # Check if data is cached
     now_dt = now()
-    cache = subs_table.get_item(Key={'api_key': api_key}).get('Item')
+    cache = subs_table.get_item(Key={'api_key': f'{api_key},pages'}).get('Item')
     if cache:
-        last_updated = datetime_from_db(cache['last_updated'])
-        if newer_than(last_updated, hours=12):
-            return {
-                "statusCode": 200,
-                "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({
-                    "lastRetrievalDate": datetime_to_json(last_updated),
-                    "subscriptions": json.loads(cache['data'])
-                })
-            }
+        try:
+            # this should read the cached pages
+            all_subs = fetch_subs(access_token)
+        except:
+            # get new pages from YouTube later
+            pass
+        else:
+            last_updated = datetime_from_db(cache['last_updated'])
+            if newer_than(last_updated, hours=12):
+                return {
+                    "statusCode": 200,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps({
+                        "lastRetrievalDate": datetime_to_json(last_updated),
+                        "subscriptions": all_subs,
+                    }),
+                }
 
     access_token = token_decrypt(user.get('youtube_access_token'))
     if not access_token:
@@ -84,9 +91,6 @@ def lambda_handler(event, context):
             "statusCode": 401,
             "body": "No YouTube token available for this user"
         }
-
-
-    
 
     try:
         all_subs = fetch_subs(access_token)
@@ -97,14 +101,6 @@ def lambda_handler(event, context):
             "statusCode": 500,
             "body": f"Error fetching from YouTube: {str(e)}"
         }
-
-    # Save new data to cache
-    response_data = json.dumps(all_subs)
-    subs_table.put_item(Item={
-        "api_key": api_key,
-        "last_updated": datetime_to_json(now_dt),
-        "data": response_data
-    })
 
     return {
         "statusCode": 200,
@@ -142,7 +138,8 @@ def refresh_access_token(refresh_token):
 def fetch_subs(token):
     all_subs = []
     page = 1
-    cache = subs_table.get_item(Key={'api_key': f'{api_key},pages'}).get('Item')
+    # use the cache that's already set
+    # cache = subs_table.get_item(Key={'api_key': f'{api_key},pages'}).get('Item')
     if cache:
         pages = cache.get('data', 0)
         while page <= pages:
