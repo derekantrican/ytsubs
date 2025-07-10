@@ -43,10 +43,7 @@ def lambda_handler(event, context):
 
     if not api_key:
         log.debug('missing api_key')
-        return {
-            "statusCode": 401,
-            "body": "Missing api_key"
-        }
+        return response(401, dict(error='Missing api_key'))
 
     # Look up the user by api_key (or by google_user_id_token if a user cannot be found by api_key)
     user = keys_table.get_item(Key={'api_key': api_key}).get('Item')
@@ -59,18 +56,13 @@ def lambda_handler(event, context):
     )
     if invalid:
         log.debug(f'invalid api_key: {api_key}')
-        return {
-            "statusCode": 403,
-            "body": "Invalid API key"
-        }
+        return response(403, dict(error='Invalid API key'))
 
     access_token = token_decrypt(user.get('youtube_access_token'))
     if not access_token:
         log.debug('no access_token available')
-        return {
-            "statusCode": 401,
-            "body": "No YouTube token available for this user"
-        }
+        msg = 'No YouTube token available for this user'
+        return response(401, dict(error=msg))
 
     # Check if data is cached
     now_dt = dt_now()
@@ -88,20 +80,20 @@ def lambda_handler(event, context):
                     now_dt=now_dt,
                     user=user,
                 )
-            except:
+            except Exception as e:
+                log.exception(e)
                 # get new pages from YouTube later
                 pass
             else:
                 # send the cached data
-                return {
-                    "statusCode": 200,
-                    "headers": {"Content-Type": "application/json"},
-                    "body": json.dumps({
-                        "lastRetrievalDate": dt_to_json(last_updated),
+                return response(
+                    200,
+                    {
+                        'lastRetrievalDate': dt_to_json(last_updated),
                         'subscriptions_count': len(all_subs),
-                        "subscriptions": all_subs,
-                    }),
-                }
+                        'subscriptions': all_subs,
+                    },
+                )
 
     try:
         per_page = query_params.get('per_page', 50)
@@ -119,31 +111,35 @@ def lambda_handler(event, context):
             return all_subs
     except Exception as e:
         log.exception(e)
-        body = json.dumps({
-            'msg': 'Error fetching from YouTube.',
-        })
+        body = dict(msg='Error fetching from YouTube.')
         try:
-            body = json.dumps({
-                'msg': 'Error fetching from YouTube.',
-                'exc': str(e),
-            })
+            json.dumps(body | dict(exc=str(e)))
         except Exception as ee:
             log.exception(ee)
-        return {
-            "statusCode": 500,
-            "headers": {"Content-Type": "application/json"},
-            "body": body,
-        }
+        else:
+            body.update(dict(exc=str(e)), **body)
+        return response(500, body)
 
-    return {
-        "statusCode": 200,
-        "headers": {"Content-Type": "application/json"},
-        "body": json.dumps({
-            "lastRetrievalDate": dt_to_json(now_dt),
+    return response(
+        200,
+        {
+            'lastRetrievalDate': dt_to_json(now_dt),
             'subscriptions_count': len(all_subs),
-            "subscriptions": all_subs,
-        }),
-    }
+            'subscriptions': all_subs,
+        },
+    )
+
+def response(status, arg_dict, /):
+    try:
+        return {
+            'statusCode': int(status),
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps(arg_dict),
+        }
+    except Exception as e:
+        log.exception(e)
+        msg = 'An exception occurred while generating the response.'
+        return response(500, {'msg': msg, 'exc': str(e)})
 
 
 def refresh_access_token(refresh_token, *, user):
@@ -234,13 +230,12 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
                 if 401 == e.code:
                     refresh_token = token_decrypt(user.get('youtube_refresh_token'))
                     if not refresh_token:
-                        return {
-                            "statusCode": 500,
-                            "body": json.dumps({
-                                "error": "The YouTube refresh token was not accessible. Please visit https://ytsubs.app and sign in again."
-                            }),
-                            "headers": {"Content-Type": "application/json"}
-                        }
+                        msg = (
+                            "The YouTube refresh token was not accessible. "
+                            "Please visit https://ytsubs.app and sign in again."
+                        )
+                        return response(500, dict(error=msg))
+
                     new_token = refresh_access_token(refresh_token, user=user)
                     if new_token:
                         return fetch_subs(
@@ -251,21 +246,18 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
                             user=user,
                         )
                     else:
-                        return {
-                            "statusCode": 403,
-                            "body": json.dumps({
-                                "error": "Access to YouTube was revoked. Please visit https://ytsubs.app and sign in again."
-                            }),
-                            "headers": {"Content-Type": "application/json"}
-                        }
+                        msg = (
+                            "Access to YouTube was revoked. "
+                            "Please visit https://ytsubs.app and sign in again."
+                        )
+                        return response(403, dict(error=msg))
                 elif 403 == e.code:
-                    return {
-                        "statusCode": 403,
-                        "headers": {"Content-Type": "application/json"},
-                        "body": json.dumps({
-                            "error": "Access to YouTube was denied. Please visit https://ytsubs.app and sign in again, ensuring you grant YouTube access."
-                        })
-                    }
+                    msg = (
+                        "Access to YouTube was denied. "
+                        "Please visit https://ytsubs.app and sign in again, "
+                        "ensuring you grant YouTube access."
+                    )
+                    return response(403, dict(error=msg))
                 raise e
         subs_count = len(all_subs)
         log.info(f"{subs_count} subscriptions grabbed from YouTube")
