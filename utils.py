@@ -4,14 +4,15 @@ import collections
 import datetime
 import gzip
 import hashlib
+import json
 import os
-
+import textwrap
 
 _encrypted_token_prefix = '{encrypted}:'
 
 
 def default_kms_key():
-    return 'alias/ytsubs-token-encrypt-key'
+    return getenv('YTSUBS_KMS_KEY', 'alias/ytsubs-token-encrypt-key')
 
 
 def data_compress(s, /, *, encoding='utf-8', errors='strict'):
@@ -139,6 +140,10 @@ def token_hash(arg_str, /):
     return hashlib.sha256(arg_bytes).hexdigest()
 
 
+def truncate(s, /, limit, *, placeholder=' …'):    
+    return textwrap.shorten(s, width=limit, placeholder=placeholder)
+
+
 def urlsafe_b64decode(s, validate=True):
     b = base64._bytes_from_decode_data(s)
     b = b.translate(base64._urlsafe_decode_translation)
@@ -147,6 +152,31 @@ def urlsafe_b64decode(s, validate=True):
 
 def urlsafe_b64encode(s):
     return base64.urlsafe_b64encode(s)
+
+
+def compress_and_encode(data):
+    cleaned = [ # Removing some "extra" props from the YouTube data structure to save on DB space (etag, kind, & channelId)
+        {
+            "id": item.get("id"),
+            "snippet": {
+                "publishedAt": item["snippet"].get("publishedAt"),
+                "title": item["snippet"].get("title"),
+                "description": item["snippet"].get("description"),
+                "resourceId": item["snippet"].get("resourceId"),
+                "thumbnails": item["snippet"].get("thumbnails")
+            }
+        }
+        for item in data
+    ]
+    json_data = json.dumps(cleaned).encode('utf-8')
+    compressed = gzip.compress(json_data)
+    return urlsafe_b64encode(compressed).decode('utf-8')
+
+
+def decode_and_decompress(b64_data):
+    compressed = urlsafe_b64decode(b64_data)
+    json_data = gzip.decompress(compressed)
+    return json.loads(json_data)
 
 
 GoogleEnvironment = collections.namedtuple(

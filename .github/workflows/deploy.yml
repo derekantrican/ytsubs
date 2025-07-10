@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - 'main'
+      - 'dev'
     paths:
       - 'fetch_subscriptions.py'
       - 'oauth_start.py'
@@ -14,7 +15,7 @@ on:
 
 jobs:
   deploy-lambdas:
-    if: ${{ !cancelled() && 'pull_request' != github.event_name }}
+    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -37,12 +38,17 @@ jobs:
       - name: Determine Lambda function name
         id: set_lambda_name
         run: |
+          SUFFIX=""
+          if [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            SUFFIX="_dev"
+          fi
+
           if [ "${{ matrix.function }}" = "fetch_subscriptions" ]; then
-            echo "lambda_name=${{ secrets.LAMBDA_FETCH_NAME }}" >> $GITHUB_OUTPUT
+            echo "lambda_name=ytsubs_fetch_subscriptions${SUFFIX}" >> $GITHUB_OUTPUT
           elif [ "${{ matrix.function }}" = "oauth_start" ]; then
-            echo "lambda_name=${{ secrets.LAMBDA_START_NAME }}" >> $GITHUB_OUTPUT
+            echo "lambda_name=ytsubs_oauth_start${SUFFIX}" >> $GITHUB_OUTPUT
           elif [ "${{ matrix.function }}" = "oauth_callback" ]; then
-            echo "lambda_name=${{ secrets.LAMBDA_CALLBACK_NAME }}" >> $GITHUB_OUTPUT
+            echo "lambda_name=ytsubs_oauth_callback${SUFFIX}" >> $GITHUB_OUTPUT
           fi
 
       - name: Deploy ${{ matrix.function }}
@@ -53,6 +59,7 @@ jobs:
             --zip-file "fileb://${{ matrix.function }}.zip"
 
   upload-assets:
+    if: github.ref == 'refs/heads/main'
     needs: deploy-lambdas
     runs-on: ubuntu-latest
 
@@ -73,6 +80,8 @@ jobs:
         env:
           S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
 
-      - name: Invalidate CloudFront cache # Force privacypolicy.html page to refresh upon push
+      - name: Invalidate CloudFront cache  # Force privacypolicy.html page to refresh upon push
         run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/privacypolicy.html"
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/privacypolicy.html"

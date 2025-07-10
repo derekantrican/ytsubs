@@ -1,5 +1,6 @@
 import boto3
 import json
+import logging
 import urllib.parse
 import urllib.request
 from utils import (
@@ -8,7 +9,20 @@ from utils import (
     dt_from_db, dt_now, dt_to_json,
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
+    compress_and_encode, decode_and_decompress, getenv, truncate,
 )
+
+# Configure logging to sys.stderr
+log = logging.getLogger(__name__)
+_handler = logging.StreamHandler()
+_handler.setLevel(logging.DEBUG)
+log.addHandler(_handler)
+del _handler
+try:
+    # set LOG_LEVEL to the minimum level that you wish to see
+    log.setLevel(getenv('LOG_LEVEL', logging.DEBUG))
+except ValueError:
+    log.setLevel(logging.DEBUG)
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
@@ -24,9 +38,11 @@ def lambda_handler(event, context):
     google_user_id = query_params.get('google_user_id')
     if google_user_id:
         google_user_id_token = token_hash(google_user_id)
+        log.debug(f'{google_user_id_token=}')
     google_user_id = None
 
     if not api_key:
+        log.debug('missing api_key')
         return {
             "statusCode": 401,
             "body": "Missing api_key"
@@ -42,6 +58,7 @@ def lambda_handler(event, context):
         )
     )
     if invalid:
+        log.debug(f'invalid api_key: {api_key}')
         return {
             "statusCode": 403,
             "body": "Invalid API key"
@@ -49,6 +66,7 @@ def lambda_handler(event, context):
 
     access_token = token_decrypt(user.get('youtube_access_token'))
     if not access_token:
+        log.debug('no access_token available')
         return {
             "statusCode": 401,
             "body": "No YouTube token available for this user"
