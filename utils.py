@@ -1,6 +1,7 @@
 import base64
 import boto3
 import collections
+import datetime
 import gzip
 import hashlib
 import json
@@ -12,6 +13,44 @@ _encrypted_token_prefix = '{encrypted}:'
 
 def default_kms_key():
     return getenv('YTSUBS_KMS_KEY', 'alias/ytsubs-token-encrypt-key')
+
+
+def data_compress(s, /, *, encoding='utf-8', errors='strict'):
+    b = base64._bytes_from_decode_data(s)
+    compressed = gzip.compress(b)
+    encoded = urlsafe_b64encode(compressed)
+    if isinstance(s, str):
+        return encoded.decode(encoding=encoding, errors=errors)
+    return encoded
+
+def data_decompress(s, /, *, encoding='utf-8', errors='strict'):
+    compressed = urlsafe_b64decode(s)
+    decompressed = gzip.decompress(compressed)
+    if isinstance(s, str):
+        return decompressed.decode(encoding=encoding, errors=errors)
+    return decompressed
+
+
+def dt_from_db(arg_str, /):
+    if arg_str.endswith('Z'):
+        arg_str = arg_str[:-1] + '+00:00'
+    return datetime.datetime.fromisoformat( arg_str )
+
+
+def dt_now():
+    return datetime.datetime.now(tz=datetime.timezone.utc)
+
+
+def dt_to_db(arg_dt, /):
+    return arg_dt.isoformat(timespec='seconds')
+
+
+def dt_to_json(arg_dt, /):
+    return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+def expire_after(arg_dt, /, *args, **kwargs):
+    return arg_dt + datetime.timedelta(*args, **kwargs)
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
@@ -47,6 +86,12 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     elif integer:
         r = int(float(r))
     return r
+
+
+def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
+    if now_dt is None:
+        now_dt = dt_now()
+    return now_dt <= expire_after(arg_dt, *args, **kwargs)
 
 
 def token_decrypt(arg_str, /, *, key=None):
