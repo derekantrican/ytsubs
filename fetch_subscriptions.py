@@ -212,12 +212,15 @@ def fetch_subs(token, *, user, api_key, cache=None, max_pages=None, now_dt=None,
             try:
                 with urllib.request.urlopen(req) as response_obj:
                     json_bytes = response_obj.read()
+                    data = json_bytes
+                    if len(data) > (200 * 1024):
+                        # compress anything close to the limit
+                        data = data_compress(json_bytes)
                     pages.put_item(Item={
                         'api_key': f'{api_key},page{page}',
                         'last_updated': last_updated,
                         'expire_at_ts': expire_at_ts,
-                        #'data': data_compress(json_bytes).decode(),
-                        'data': json_bytes.decode(),
+                        'data': data.decode(),
                     })
                     data = json.loads(json_bytes.decode())
                     all_subs.extend(data.get('items', []))
