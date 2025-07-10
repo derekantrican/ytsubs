@@ -33,9 +33,6 @@ def lambda_handler(event, context):
     def datetime_to_db(arg_dt, /):
         return arg_dt.isoformat(timespec='seconds')
 
-    def datetime_to_json(arg_dt, /):
-        return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-
     def newer_than(arg_dt, /, *args, **kwargs):
         return arg_dt > (now() - datetime.timedelta(*args, **kwargs))
 
@@ -124,6 +121,9 @@ def lambda_handler(event, context):
 def now():
     return datetime.datetime.now(tz=datetime.timezone.utc)
 
+def datetime_to_json(arg_dt, /):
+    return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
 
 def refresh_access_token(refresh_token, *, user):
     token_url = "https://oauth2.googleapis.com/token"
@@ -164,9 +164,6 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
                 all_subs.extend(data.get('items', []))
             page += 1
         return all_subs
-
-    def datetime_to_json(arg_dt, /):
-        return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
 
     headers = {
         "Authorization": f"Bearer {token}"
