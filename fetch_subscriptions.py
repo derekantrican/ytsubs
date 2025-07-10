@@ -116,9 +116,21 @@ def lambda_handler(event, context):
             log.debug("returned {all_subs.get('statusCode', '???')}")
             return all_subs
     except Exception as e:
+        log.exception(e)
+        body = json.dumps({
+            'msg': 'Error fetching from YouTube.',
+        })
+        try:
+            body = json.dumps({
+                'msg': 'Error fetching from YouTube.',
+                'exc': str(e),
+            })
+        except Exception as ee:
+            log.exception(ee)
         return {
             "statusCode": 500,
-            "body": f"Error fetching from YouTube: {str(e)}"
+            "headers": {"Content-Type": "application/json"},
+            "body": body,
         }
 
     return {
