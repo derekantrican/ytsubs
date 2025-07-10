@@ -207,6 +207,9 @@ def duration_iso_string(duration):
     )
 
 
+def is_aware(value):
+    return value.utcoffset() is not None
+
 class JSONEncoder(json.JSONEncoder):
     item_separator = ','
     key_separator = ':'
