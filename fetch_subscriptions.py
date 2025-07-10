@@ -5,7 +5,7 @@ import urllib.request
 from utils import (
     EnvGoogle,
     data_compress, data_decompress,
-    dt_from_db, dt_now, dt_to_json,
+    dt_to_db, dt_from_db, dt_now, dt_to_json,
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
 )
@@ -143,8 +143,10 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
         pages = cache.get('data', 0)
         while page <= pages:
             row = subs_table.get_item(Key={'api_key': f'{api_key},page{page}'}).get('Item')
-            json_str = data_decompress(row.get('data'))
+            json_str = row.get('data')
             if json_str:
+                if '"' not in json_str:
+                    json_str = data_decompress(json_str)
                 data = json.loads(json_str)
                 all_subs.extend(data.get('items', []))
             page += 1
@@ -160,7 +162,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
     }
     base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
     expire_at_ts = round(expire_after(now_dt, hours=12).timestamp())
-    last_updated = dt_to_json(now_dt)
+    last_updated = dt_to_db(now_dt)
     next_page_token = None
 
     with subs_table.batch_writer() as pages:
