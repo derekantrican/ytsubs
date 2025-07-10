@@ -105,14 +105,16 @@ def urlsafe_b64encode(s):
 
 
 def compress_and_encode(data):
-    cleaned = [ # Removing some "extra" props from the YouTube data structure to save on DB space (etag, kind, & resourceId)
+    cleaned = [ # Removing some "extra" props from the YouTube data structure to save on DB space (etag, kind, & channelId - which is your own channelId, not the sub's id)
         {
             "id": item.get("id"),
             "snippet": {
                 "publishedAt": item["snippet"].get("publishedAt"),
                 "title": item["snippet"].get("title"),
                 "description": item["snippet"].get("description"),
-                "channelId": item["snippet"].get("channelId"),
+                "resourceId": {
+                    "channelId": item["snippet"].get("resourceId", {}).get("channelId")
+                },
                 "thumbnails": item["snippet"].get("thumbnails")
             }
         }
