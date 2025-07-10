@@ -216,8 +216,8 @@ def fetch_subs(token, *, user, api_key, cache=None, max_pages=None, now_dt=None,
                         'api_key': f'{api_key},page{page}',
                         'last_updated': last_updated,
                         'expire_at_ts': expire_at_ts,
-                        'data': data_compress(json_bytes).decode(),
-                        #'data': json_bytes.decode(),
+                        #'data': data_compress(json_bytes).decode(),
+                        'data': json_bytes.decode(),
                     })
                     data = json.loads(json_bytes.decode())
                     all_subs.extend(data.get('items', []))
