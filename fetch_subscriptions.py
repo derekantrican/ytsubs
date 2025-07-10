@@ -104,11 +104,13 @@ def lambda_handler(event, context):
                 }
 
     try:
+        per_page = query_params.get('per_page', 50)
         all_subs = fetch_subs(
             access_token,
             api_key=api_key,
             cache=None,
             now_dt=now_dt,
+            per_page=per_page,
             user=user,
         )
         log.debug(f'all_subs_type={type(all_subs)}')
@@ -167,7 +169,7 @@ def refresh_access_token(refresh_token, *, user):
     return None
 
 
-def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
+def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
     if now_dt is None:
         now_dt = dt_now()
 
@@ -192,7 +194,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
     params = {
         "part": "snippet",
         "mine": "true",
-        "maxResults": "25",
+        "maxResults": str(per_page or 50),
     }
     base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
     expire_at_ts = round(expire_after(now_dt, hours=12).timestamp())
