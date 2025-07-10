@@ -111,6 +111,7 @@ def lambda_handler(event, context):
             now_dt=now_dt,
             user=user,
         )
+        log.debug(f'all_subs_type={type(all_subs)}')
         if isinstance(all_subs, dict) and "statusCode" in all_subs:
             log.debug("returned {all_subs.get('statusCode', '???')}")
             return all_subs
@@ -169,6 +170,8 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
                 data = json.loads(json_str)
                 all_subs.extend(data.get('items', []))
             page += 1
+        subs_count = len(all_subs)
+        log.info(f"{subs_count} subscriptions grabbed from the cached pages")
         return all_subs
 
     headers = {
@@ -250,4 +253,6 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
                         })
                     }
                 raise e
+        subs_count = len(all_subs)
+        log.info(f"{subs_count} subscriptions grabbed from YouTube")
         return all_subs
