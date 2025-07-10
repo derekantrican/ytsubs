@@ -34,9 +34,13 @@ def lambda_handler(event, context):
     api_key = query_params.get('api_key')
 
     if 'Q' == query_params.get('cache_ttl'):
-        return response(200, dict(
-            result=dynamodb.describe_time_to_live(TableName='ytsubs_subscriptions_cache'),
-        ))
+        try:
+            return response(
+                200,
+                dynamodb.describe_time_to_live(TableName='ytsubs_subscriptions_cache'),
+            )
+        except Exception as e:
+            return response(500, dict(msg='An exception occurred.', exc=str(e)))
 
     # Calculate the google_user_id_token if google_user_id was provided
     google_user_id_token = query_params.get('google_user_id_token')
