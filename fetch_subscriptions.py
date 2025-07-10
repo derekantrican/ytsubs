@@ -192,7 +192,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
     params = {
         "part": "snippet",
         "mine": "true",
-        "maxResults": "50"
+        "maxResults": "25",
     }
     base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
     expire_at_ts = round(expire_after(now_dt, hours=12).timestamp())
