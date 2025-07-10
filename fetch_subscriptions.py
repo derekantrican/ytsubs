@@ -216,8 +216,8 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
             full_url = base_url + "?" + urllib.parse.urlencode(query)
             req = urllib.request.Request(full_url, headers=headers)
             try:
-                with urllib.request.urlopen(req) as response:
-                    json_bytes = response.read()
+                with urllib.request.urlopen(req) as response_obj:
+                    json_bytes = response_obj.read()
                     pages.put_item(Item={
                         'api_key': f'{api_key},page{page}',
                         'last_updated': last_updated,
