@@ -1,6 +1,7 @@
 import base64
 import boto3
 import collections
+import datetime
 import gzip
 import hashlib
 import os
@@ -27,6 +28,24 @@ def data_decompress(s, /, *, encoding='utf-8', errors='strict'):
     if isinstance(s, str):
         return decompressed.decode(encoding=encoding, errors=errors)
     return decompressed
+
+
+def dt_from_db(arg_str, /):
+    if arg_str.endswith('Z'):
+        arg_str = arg_str[:-1] + '+00:00'
+    return datetime.datetime.fromisoformat( arg_str )
+
+
+def dt_now():
+    return datetime.datetime.now(tz=datetime.timezone.utc)
+
+
+def dt_to_db(arg_dt, /):
+    return arg_dt.isoformat(timespec='seconds')
+
+
+def dt_to_json(arg_dt, /):
+    return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
