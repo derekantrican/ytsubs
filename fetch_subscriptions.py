@@ -34,8 +34,10 @@ def lambda_handler(event, context):
     def datetime_to_db(arg_dt, /):
         return arg_dt.isoformat(timespec='seconds')
 
-    def newer_than(arg_dt, /, *args, **kwargs):
-        return arg_dt > (now() - datetime.timedelta(*args, **kwargs))
+    def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
+        if now_dt is None:
+            now_dt = dt_now()
+        return arg_dt > (now_dt - datetime.timedelta(*args, **kwargs))
 
     if not api_key:
         return {
@@ -83,7 +85,7 @@ def lambda_handler(event, context):
             pass
         else:
             last_updated = datetime_from_db(cache['last_updated'])
-            if newer_than(last_updated, hours=12):
+            if newer_than(last_updated, hours=12, now_dt=now_dt):
                 return {
                     "statusCode": 200,
                     "headers": {"Content-Type": "application/json"},
