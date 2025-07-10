@@ -176,8 +176,10 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
         pages = cache.get('data', 0)
         while page <= pages:
             row = subs_table.get_item(Key={'api_key': f'{api_key},page{page}'}).get('Item')
-            json_str = data_decompress(row.get('data'))
+            json_str = row.get('data')
             if json_str:
+                if '"' not in json_str:
+                    json_str = data_decompress(json_str)
                 data = json.loads(json_str)
                 all_subs.extend(data.get('items', []))
             page += 1
@@ -212,7 +214,8 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
                         'api_key': f'{api_key},page{page}',
                         'last_updated': last_updated,
                         'expire_at_ts': expire_at_ts,
-                        'data': data_compress(json_bytes).decode(),
+                        #'data': data_compress(json_bytes).decode(),
+                        'data': json_bytes.decode(),
                     })
                     data = json.loads(json_bytes.decode())
                     all_subs.extend(data.get('items', []))
