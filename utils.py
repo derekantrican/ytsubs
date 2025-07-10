@@ -9,7 +9,7 @@ _encrypted_token_prefix = '{encrypted}:'
 
 
 def default_kms_key():
-    return 'alias/ytsubs-token-encrypt-key'
+    return getenv('YTSUBS_KMS_KEY', 'alias/ytsubs-token-encrypt-key')
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
