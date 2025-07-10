@@ -48,6 +48,10 @@ def dt_to_json(arg_dt, /):
     return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
+def expire_after(arg_dt, /, *args, **kwargs):
+    return arg_dt + datetime.timedelta(*args, **kwargs)
+
+
 def getenv(key, default=None, /, *, integer=False, string=True):
     """
         Guarantees a returned type from calling `os.getenv`
@@ -81,6 +85,12 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     elif integer:
         r = int(float(r))
     return r
+
+
+def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
+    if now_dt is None:
+        now_dt = dt_now()
+    return now_dt <= expire_after(arg_dt, *args, **kwargs)
 
 
 def token_decrypt(arg_str, /, *, key=None):
