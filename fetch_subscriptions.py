@@ -98,6 +98,7 @@ def lambda_handler(event, context):
                     "headers": {"Content-Type": "application/json"},
                     "body": json.dumps({
                         "lastRetrievalDate": dt_to_json(last_updated),
+                        'subscriptions_count': len(all_subs),
                         "subscriptions": all_subs,
                     }),
                 }
@@ -110,7 +111,8 @@ def lambda_handler(event, context):
             now_dt=now_dt,
             user=user,
         )
-        if isinstance(all_subs, dict) and all_subs.get("statusCode") == 403:
+        if isinstance(all_subs, dict) and "statusCode" in all_subs:
+            log.debug("returned {all_subs.get('statusCode', '???')}")
             return all_subs
     except Exception as e:
         return {
@@ -123,8 +125,9 @@ def lambda_handler(event, context):
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps({
             "lastRetrievalDate": dt_to_json(now_dt),
-            "subscriptions": all_subs
-        })
+            'subscriptions_count': len(all_subs),
+            "subscriptions": all_subs,
+        }),
     }
 
 
