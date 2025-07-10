@@ -6,7 +6,7 @@ import urllib.request
 from utils import (
     EnvGoogle,
     data_compress, data_decompress,
-    dt_now,
+    dt_now, dt_to_json,
     token_decrypt, token_encrypt, token_hash,
 )
 
@@ -88,7 +88,7 @@ def lambda_handler(event, context):
                     "statusCode": 200,
                     "headers": {"Content-Type": "application/json"},
                     "body": json.dumps({
-                        "lastRetrievalDate": datetime_to_json(last_updated),
+                        "lastRetrievalDate": dt_to_json(last_updated),
                         "subscriptions": all_subs,
                     }),
                 }
@@ -113,14 +113,10 @@ def lambda_handler(event, context):
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
         "body": json.dumps({
-            "lastRetrievalDate": datetime_to_json(now_dt),
+            "lastRetrievalDate": dt_to_json(now_dt),
             "subscriptions": all_subs
         })
     }
-
-
-def datetime_to_json(arg_dt, /):
-    return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
 def refresh_access_token(refresh_token, *, user):
@@ -173,7 +169,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
     }
     base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
     expire_at_ts = round((now_dt + datetime.timedelta(hours=12)).timestamp())
-    last_updated = datetime_to_json(now_dt)
+    last_updated = dt_to_json(now_dt)
     next_page_token = None
 
     with subs_table.batch_writer() as pages:
