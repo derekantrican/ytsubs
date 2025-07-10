@@ -9,7 +9,7 @@ from utils import (
     dt_from_db, dt_now, dt_to_json,
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
-    compress_and_encode, decode_and_decompress, getenv, truncate,
+    compress_and_encode, decode_and_decompress, getenv, truncate, # noqa: F401
 )
 
 # Configure logging to sys.stderr
