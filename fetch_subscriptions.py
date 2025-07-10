@@ -150,7 +150,7 @@ def lambda_handler(event, context):
                     pages.put_item(Item={
                         'api_key': f'{api_key},page{page}',
                         'last_updated': last_updated,
-                        'expire_at_ts': (now_dt + datetime.timedelta(hours=12)).timestamp(),
+                        'expire_at_ts': round((now_dt + datetime.timedelta(hours=12)).timestamp()),
                         'data': json_str,
                     })
                     data = json.loads(json_str)
