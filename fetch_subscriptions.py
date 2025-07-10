@@ -76,11 +76,27 @@ def lambda_handler(event, context):
                 200,
                 dict(user=user.get('google_user_id_token')) | client.describe_time_to_live(TableName=table_name),
             )
-        elif 'L' == query_params.get('cache_ttl'):
+        elif 'LT' == query_params.get('cache_ttl'):
             return response(
                 200,
                 client.list_tables(),
             )
+        elif 'DL' == query_params.get('cache_ttl'):
+            return response(
+                200,
+                client.describe_limits(),
+            )
+        elif 'DT' == query_params.get('cache_ttl'):
+            if user.get('google_user_id_token') not in users:
+                return response(403, dict(error='Not Authorized'))
+            results = dict()
+            results['ytsubs_api_keys'] = client.describe_table(
+                TableName='ytsubs_api_keys'
+            )
+            results[table_name] = client.describe_table(
+                TableName=table_name
+            )
+            return response(200, results)
         elif (v := query_params.get('cache_ttl')) in ('C', 'E',):
             if user.get('google_user_id_token') not in users:
                 return response(403, dict(error='Not Authorized'))
