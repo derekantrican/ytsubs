@@ -6,6 +6,7 @@ import urllib.request
 from utils import (
     EnvGoogle,
     data_compress, data_decompress,
+    dt_now,
     token_decrypt, token_encrypt, token_hash,
 )
 
@@ -65,7 +66,7 @@ def lambda_handler(event, context):
         }
 
     # Check if data is cached
-    now_dt = now()
+    now_dt = dt_now()
     cache = subs_table.get_item(Key={'api_key': f'{api_key},pages'}).get('Item')
     if cache:
         try:
@@ -118,9 +119,6 @@ def lambda_handler(event, context):
     }
 
 
-def now():
-    return datetime.datetime.now(tz=datetime.timezone.utc)
-
 def datetime_to_json(arg_dt, /):
     return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
 
@@ -150,7 +148,7 @@ def refresh_access_token(refresh_token, *, user):
 
 def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
     if now_dt is None:
-        now_dt = now()
+        now_dt = dt_now()
 
     all_subs = []
     page = 1
