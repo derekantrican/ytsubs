@@ -198,16 +198,6 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
     last_updated = dt_to_db(now_dt)
     next_page_token = None
 
-    if per_page and int(per_page) > 50:
-        return response(
-            200,
-            dict(
-                expire_at_ts=expire_at_ts,
-                last_updated=last_updated,
-                params=params,
-            ),
-        )
-
     with subs_table.batch_writer() as pages:
         while True:
             query = params.copy()
@@ -271,5 +261,14 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
                     return response(403, dict(error=msg))
                 raise e
         subs_count = len(all_subs)
+        if per_page and int(per_page) == 11:
+            return response(
+                200,
+                dict(
+                    page=page,
+                    subs_count=subs_count,
+                ),
+            )
+        #subs_count = len(all_subs)
         log.info(f"{subs_count} subscriptions grabbed from YouTube")
         return all_subs
