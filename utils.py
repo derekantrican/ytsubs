@@ -1,6 +1,7 @@
 import base64
 import boto3
 import collections
+import gzip
 import hashlib
 import os
 
@@ -10,6 +11,22 @@ _encrypted_token_prefix = '{encrypted}:'
 
 def default_kms_key():
     return 'alias/ytsubs-token-encrypt-key'
+
+
+def data_compress(s, /, *, encoding='utf-8', errors='strict'):
+    b = base64._bytes_from_decode_data(s)
+    compressed = gzip.compress(b)
+    encoded = urlsafe_b64encode(compressed)
+    if isinstance(s, str):
+        return encoded.decode(encoding=encoding, errors=errors)
+    return encoded
+
+def data_decompress(s, /, *, encoding='utf-8', errors='strict'):
+    compressed = urlsafe_b64decode(s)
+    decompressed = gzip.decompress(compressed)
+    if isinstance(s, str):
+        return decompressed.decode(encoding=encoding, errors=errors)
+    return decompressed
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
