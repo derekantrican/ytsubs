@@ -35,9 +35,10 @@ def lambda_handler(event, context):
 
     if 'Q' == query_params.get('cache_ttl'):
         try:
+            client = boto3.client('dynamodb')
             return response(
                 200,
-                dynamodb.describe_time_to_live(TableName='ytsubs_subscriptions_cache'),
+                client.describe_time_to_live(TableName='ytsubs_subscriptions_cache'),
             )
         except Exception as e:
             return response(500, dict(msg='An exception occurred.', exc=str(e)))
