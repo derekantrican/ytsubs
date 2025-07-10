@@ -34,11 +34,6 @@ def lambda_handler(event, context):
     def datetime_to_db(arg_dt, /):
         return arg_dt.isoformat(timespec='seconds')
 
-    def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
-        if now_dt is None:
-            now_dt = dt_now()
-        return arg_dt > (now_dt - datetime.timedelta(*args, **kwargs))
-
     if not api_key:
         return {
             "statusCode": 401,
@@ -121,6 +116,16 @@ def lambda_handler(event, context):
     }
 
 
+def expire_after(arg_dt, /, *args, **kwargs):
+    return arg_dt + datetime.timedelta(*args, **kwargs)
+
+
+def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
+    if now_dt is None:
+        now_dt = dt_now()
+    return arg_dt > (now_dt - datetime.timedelta(*args, **kwargs))
+
+
 def refresh_access_token(refresh_token, *, user):
     token_url = "https://oauth2.googleapis.com/token"
     data = urllib.parse.urlencode({
@@ -170,7 +175,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
         "maxResults": "50"
     }
     base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
-    expire_at_ts = round((now_dt + datetime.timedelta(hours=12)).timestamp())
+    expire_at_ts = round(expire_after(now_dt, hours=12).timestamp())
     last_updated = dt_to_json(now_dt)
     next_page_token = None
 
