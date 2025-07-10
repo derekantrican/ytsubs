@@ -112,6 +112,19 @@ def lambda_handler(event, context):
         }
 
     def fetch_subs(token):
+        all_subs = []
+        page = 1
+        cache = subs_table.get_item(Key={'api_key': f'{api_key},pages'}).get('Item')
+        if cache:
+            pages = cache.get('data', 0)
+            while page <= pages:
+                row = subs_table.get_item(Key={'api_key': f'{api_key},page{page}').get('Item')
+                json_str = row.get('data')
+                if json_str:
+                    data = json.loads(json_str)
+                    all_subs.extend(data.get('items', []))
+                page += 1
+            return all_subs
         headers = {
             "Authorization": f"Bearer {token}"
         }
@@ -121,10 +134,11 @@ def lambda_handler(event, context):
             "maxResults": "50"
         }
         base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
-        all_subs = []
+        last_updated = datetime_to_json(now_dt)
         next_page_token = None
 
-        while True:
+        with subs_table.batch_writer() as pages:
+          while True:
             query = params.copy()
             if next_page_token:
                 query['pageToken'] = next_page_token
@@ -132,11 +146,25 @@ def lambda_handler(event, context):
             req = urllib.request.Request(full_url, headers=headers)
             try:
                 with urllib.request.urlopen(req) as response:
-                    data = json.loads(response.read().decode())
+                    json_str = response.read().decode()
+                    pages.put_item(Item={
+                        'api_key': f'{api_key},page{page}',
+                        'last_updated': last_updated,
+                        'expire_at_ts': (now_dt + datetime.timedelta(hours=12)).timestamp(),
+                        'data': json_str,
+                    })
+                    data = json.loads(json_str)
                     all_subs.extend(data.get('items', []))
                     next_page_token = data.get('nextPageToken')
                     if not next_page_token:
+                        pages.put_item(Item={
+                            'api_key': f'{api_key},pages',
+                            'last_updated': last_updated,
+                            'expire_at_ts': (now_dt + datetime.timedelta(hours=12)).timestamp(),
+                            'data': page,
+                        })
                         break
+                    page += 1
             except urllib.error.HTTPError as e:
                 refresh_token = None
                 if 401 == e.code:
