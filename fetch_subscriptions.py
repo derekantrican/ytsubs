@@ -6,7 +6,7 @@ import urllib.request
 from utils import (
     EnvGoogle,
     data_compress, data_decompress,
-    dt_from_db, dt_now, dt_to_json,
+    dt_from_db, dt_now, dt_to_db, dt_to_json,
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
     compress_and_encode, decode_and_decompress, getenv, truncate, # noqa: F401
@@ -161,7 +161,8 @@ def refresh_access_token(refresh_token, *, user):
                 keys_table.put_item(Item=user)
                 return new_token
     except Exception as e:
-        print(f"Failed to refresh token: {e}")
+        log.exception(e)
+        log.error("Failed to refresh token")
     return None
 
 
@@ -194,8 +195,18 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
     }
     base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
     expire_at_ts = round(expire_after(now_dt, hours=12).timestamp())
-    last_updated = dt_to_json(now_dt)
+    last_updated = dt_to_db(now_dt)
     next_page_token = None
+
+    if per_page and per_page > 50:
+        return response(
+            200,
+            dict(
+                expire_at_ts=expire_at_ts,
+                last_updated=last_updated,
+                params=params,
+            ),
+        )
 
     with subs_table.batch_writer() as pages:
         while True:
