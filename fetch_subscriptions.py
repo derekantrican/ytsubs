@@ -5,7 +5,7 @@ import urllib.request
 from utils import (
     EnvGoogle,
     data_compress, data_decompress,
-    dt_to_db, dt_from_db, dt_now, dt_to_json,
+    dt_from_db, dt_now, dt_to_db, dt_to_json, dt_to_ts,
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
 )
@@ -161,7 +161,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
         "maxResults": "50"
     }
     base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
-    expire_at_ts = round(expire_after(now_dt, hours=12).timestamp())
+    expire_at_ts = dt_to_ts(expire_after(now_dt, hours=12))
     last_updated = dt_to_db(now_dt)
     next_page_token = None
 
