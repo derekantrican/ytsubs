@@ -6,7 +6,7 @@ import urllib.request
 from utils import (
     EnvGoogle,
     data_compress, data_decompress,
-    dt_now, dt_to_json,
+    dt_from_db, dt_now, dt_to_json,
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
 )
@@ -26,14 +26,6 @@ def lambda_handler(event, context):
     if google_user_id:
         google_user_id_token = token_hash(google_user_id)
     google_user_id = None
-
-    def datetime_from_db(arg_str, /):
-        if arg_str.endswith('Z'):
-            arg_str = arg_str[:-1] + '+00:00'
-        return datetime.datetime.fromisoformat( arg_str )
-
-    def datetime_to_db(arg_dt, /):
-        return arg_dt.isoformat(timespec='seconds')
 
     if not api_key:
         return {
@@ -80,7 +72,7 @@ def lambda_handler(event, context):
             # get new pages from YouTube later
             pass
         else:
-            last_updated = datetime_from_db(cache['last_updated'])
+            last_updated = dt_from_db(cache['last_updated'])
             if newer_than(last_updated, hours=12, now_dt=now_dt):
                 return {
                     "statusCode": 200,
