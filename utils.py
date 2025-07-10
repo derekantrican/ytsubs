@@ -4,6 +4,7 @@ import collections
 import datetime
 import gzip
 import hashlib
+import math
 import os
 
 
@@ -46,6 +47,20 @@ def dt_to_db(arg_dt, /):
 
 def dt_to_json(arg_dt, /):
     return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+def dt_to_ts(arg_dt, /, *, integer=True):
+    dt = arg_dt
+    timestamp = int()
+    if arg_dt.utcoffset() is None:
+        td = arg_dt - datetime.datetime.fromtimestamp(0, tz=None)
+        timestamp = td.total_seconds()
+    else:
+        dt = arg_dt.astimezone(tz=datetime.timezone.utc)
+        timestamp = dt.timestamp()
+    if not integer:
+        return timestamp
+    return math.ceil(timestamp)
 
 
 def expire_after(arg_dt, /, *args, **kwargs):
