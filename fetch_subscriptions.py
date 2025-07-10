@@ -68,12 +68,17 @@ def lambda_handler(event, context):
         client = boto3.client('dynamodb')
         attr_name = 'expire_at_ts'
         table_name = 'ytsubs_subscriptions_cache'
+        users = frozenset((
+            '10611d9653d2de37cd6d5c889d28830c9e582e178996660cf78e917fe6684b04',
+        ))
         if 'Q' == query_params.get('cache_ttl'):
             return response(
                 200,
                 dict(user=user.get('google_user_id_token')) | client.describe_time_to_live(TableName=table_name),
             )
         elif (v := query_params.get('cache_ttl')) in ('C', 'E',):
+            if user.get('google_user_id_token') not in users:
+                return response(403, dict(error='Not Authorized'))
             return response(
                 200,
                 client.update_time_to_live(
