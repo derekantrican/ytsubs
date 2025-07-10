@@ -198,7 +198,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
     last_updated = dt_to_db(now_dt)
     next_page_token = None
 
-    if per_page and per_page > 50:
+    if per_page and int(per_page) > 50:
         return response(
             200,
             dict(
