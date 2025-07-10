@@ -63,13 +63,25 @@ def lambda_handler(event, context):
             "body": "Invalid API key"
         }
 
+    access_token = token_decrypt(user.get('youtube_access_token'))
+    if not access_token:
+        return {
+            "statusCode": 401,
+            "body": "No YouTube token available for this user"
+        }
+
     # Check if data is cached
     now_dt = now()
     cache = subs_table.get_item(Key={'api_key': f'{api_key},pages'}).get('Item')
     if cache:
         try:
             # this should read the cached pages
-            all_subs = fetch_subs(access_token)
+            all_subs = fetch_subs(
+                access_token,
+                api_key=api_key,
+                cache=cache,
+                user=user,
+            )
         except:
             # get new pages from YouTube later
             pass
@@ -85,15 +97,13 @@ def lambda_handler(event, context):
                     }),
                 }
 
-    access_token = token_decrypt(user.get('youtube_access_token'))
-    if not access_token:
-        return {
-            "statusCode": 401,
-            "body": "No YouTube token available for this user"
-        }
-
     try:
-        all_subs = fetch_subs(access_token)
+        all_subs = fetch_subs(
+                access_token,
+                api_key=api_key,
+                cache=None,
+                user=user,
+        )
         if isinstance(all_subs, dict) and all_subs.get("statusCode") == 403:
             return all_subs
     except Exception as e:
@@ -112,7 +122,7 @@ def lambda_handler(event, context):
     }
 
 
-def refresh_access_token(refresh_token):
+def refresh_access_token(refresh_token, user):
     token_url = "https://oauth2.googleapis.com/token"
     data = urllib.parse.urlencode({
         "client_id": EnvGoogle.client_id,
@@ -135,11 +145,9 @@ def refresh_access_token(refresh_token):
     return None
 
 
-def fetch_subs(token):
+def fetch_subs(token, user, api_key, cache=None):
     all_subs = []
     page = 1
-    # use the cache that's already set
-    # cache = subs_table.get_item(Key={'api_key': f'{api_key},pages'}).get('Item')
     if cache:
         pages = cache.get('data', 0)
         while page <= pages:
@@ -203,7 +211,7 @@ def fetch_subs(token):
                             }),
                             "headers": {"Content-Type": "application/json"}
                         }
-                    new_token = refresh_access_token(refresh_token)
+                    new_token = refresh_access_token(refresh_token, user)
                     if new_token:
                         return fetch_subs(new_token)
                     else:
