@@ -5,7 +5,7 @@ import urllib.parse
 import urllib.request
 from utils import (
     EnvGoogle,
-    data_compress, data_decompress, # nowa: F401
+    data_compress, data_decompress, # noqa: F401
     dt_from_db, dt_now, dt_to_db, dt_to_json,
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
@@ -96,13 +96,15 @@ def lambda_handler(event, context):
                 )
 
     try:
+        max_pages = query_params.get('max_pages')
         per_page = query_params.get('per_page', 50)
         all_subs = fetch_subs(
             access_token,
             api_key=api_key,
             cache=None,
+            max_pages=int(max_pages) if max_pages else None,
             now_dt=now_dt,
-            per_page=per_page,
+            per_page=int(per_page) if per_page else None,
             user=user,
         )
         log.debug(f'all_subs_type={type(all_subs)}')
@@ -166,7 +168,7 @@ def refresh_access_token(refresh_token, *, user):
     return None
 
 
-def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
+def fetch_subs(token, *, user, api_key, cache=None, max_pages=None, now_dt=None, per_page=None):
     if now_dt is None:
         now_dt = dt_now()
 
@@ -220,7 +222,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
                     data = json.loads(json_bytes.decode())
                     all_subs.extend(data.get('items', []))
                     next_page_token = data.get('nextPageToken')
-                    if not next_page_token or page >= 5:
+                    if not next_page_token or (max_pages and page >= max_pages):
                         pages.put_item(Item={
                             'api_key': f'{api_key},pages',
                             'last_updated': last_updated,
@@ -264,7 +266,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None, per_page=None):
                     return response(403, dict(error=msg))
                 raise e
         subs_count = len(all_subs)
-        if per_page and int(per_page) == 11:
+        if per_page is not None and per_page == 11:
             return response(
                 200,
                 dict(
