@@ -123,7 +123,7 @@ def expire_after(arg_dt, /, *args, **kwargs):
 def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
     if now_dt is None:
         now_dt = dt_now()
-    return arg_dt > (now_dt - datetime.timedelta(*args, **kwargs))
+    return now_dt <= expire_after(arg_dt, *args, **kwargs)
 
 
 def refresh_access_token(refresh_token, *, user):
