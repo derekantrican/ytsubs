@@ -118,7 +118,7 @@ def lambda_handler(event, context):
         if cache:
             pages = cache.get('data', 0)
             while page <= pages:
-                row = subs_table.get_item(Key={'api_key': f'{api_key},page{page}').get('Item')
+                row = subs_table.get_item(Key={'api_key': f'{api_key},page{page}'}).get('Item')
                 json_str = row.get('data')
                 if json_str:
                     data = json.loads(json_str)
