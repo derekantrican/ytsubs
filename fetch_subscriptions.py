@@ -58,21 +58,23 @@ def lambda_handler(event, context):
     now_dt = dt_now()
     cache = subs_table.get_item(Key={'api_key': f'{api_key},pages'}).get('Item')
     if cache:
-        try:
-            # this should read the cached pages
-            all_subs = fetch_subs(
-                access_token,
-                api_key=api_key,
-                cache=cache,
-                now_dt=now_dt,
-                user=user,
-            )
-        except:
-            # get new pages from YouTube later
-            pass
-        else:
-            last_updated = dt_from_db(cache['last_updated'])
-            if newer_than(last_updated, hours=12, now_dt=now_dt):
+        # check that the cache is fresh
+        last_updated = dt_from_db(cache['last_updated'])
+        if newer_than(last_updated, hours=12, now_dt=now_dt):
+            try:
+                # this should read the cached pages
+                all_subs = fetch_subs(
+                    access_token,
+                    api_key=api_key,
+                    cache=cache,
+                    now_dt=now_dt,
+                    user=user,
+                )
+            except:
+                # get new pages from YouTube later
+                pass
+            else:
+                # send the cached data
                 return {
                     "statusCode": 200,
                     "headers": {"Content-Type": "application/json"},
