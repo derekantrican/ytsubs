@@ -25,9 +25,6 @@ def lambda_handler(event, context):
         google_user_id_token = token_hash(google_user_id)
     google_user_id = None
 
-    def now():
-        return datetime.datetime.now(tz=datetime.timezone.utc)
-
     def datetime_from_db(arg_str, /):
         if arg_str.endswith('Z'):
             arg_str = arg_str[:-1] + '+00:00'
@@ -80,6 +77,7 @@ def lambda_handler(event, context):
                 access_token,
                 api_key=api_key,
                 cache=cache,
+                now_dt=now_dt,
                 user=user,
             )
         except:
@@ -99,10 +97,11 @@ def lambda_handler(event, context):
 
     try:
         all_subs = fetch_subs(
-                access_token,
-                api_key=api_key,
-                cache=None,
-                user=user,
+            access_token,
+            api_key=api_key,
+            cache=None,
+            now_dt=now_dt,
+            user=user,
         )
         if isinstance(all_subs, dict) and all_subs.get("statusCode") == 403:
             return all_subs
@@ -122,7 +121,11 @@ def lambda_handler(event, context):
     }
 
 
-def refresh_access_token(refresh_token, user):
+def now():
+    return datetime.datetime.now(tz=datetime.timezone.utc)
+
+
+def refresh_access_token(refresh_token, *, user):
     token_url = "https://oauth2.googleapis.com/token"
     data = urllib.parse.urlencode({
         "client_id": EnvGoogle.client_id,
@@ -145,7 +148,10 @@ def refresh_access_token(refresh_token, user):
     return None
 
 
-def fetch_subs(token, user, api_key, cache=None):
+def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
+    if now_dt is None:
+        now_dt = now()
+
     all_subs = []
     page = 1
     if cache:
@@ -158,6 +164,10 @@ def fetch_subs(token, user, api_key, cache=None):
                 all_subs.extend(data.get('items', []))
             page += 1
         return all_subs
+
+    def datetime_to_json(arg_dt, /):
+        return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
     headers = {
         "Authorization": f"Bearer {token}"
     }
@@ -211,9 +221,15 @@ def fetch_subs(token, user, api_key, cache=None):
                             }),
                             "headers": {"Content-Type": "application/json"}
                         }
-                    new_token = refresh_access_token(refresh_token, user)
+                    new_token = refresh_access_token(refresh_token, user=user)
                     if new_token:
-                        return fetch_subs(new_token)
+                        return fetch_subs(
+                            new_token,
+                            api_key=api_key,
+                            cache=None,
+                            now_dt=now_dt,
+                            user=user,
+                        )
                     else:
                         return {
                             "statusCode": 403,
