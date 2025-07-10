@@ -33,6 +33,11 @@ def lambda_handler(event, context):
     query_params = event.get('queryStringParameters') or {}
     api_key = query_params.get('api_key')
 
+    if 'Q' == query_params.get('cache_ttl'):
+        return response(200, dict(
+            result=dynamodb.describe_time_to_live(TableName='ytsubs_subscriptions_cache'),
+        ))
+
     # Calculate the google_user_id_token if google_user_id was provided
     google_user_id_token = query_params.get('google_user_id_token')
     google_user_id = query_params.get('google_user_id')
