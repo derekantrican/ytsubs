@@ -4,6 +4,7 @@ import collections
 import datetime
 import gzip
 import hashlib
+import json
 import math
 import os
 
@@ -106,6 +107,19 @@ def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
     if now_dt is None:
         now_dt = dt_now()
     return now_dt <= expire_after(arg_dt, *args, **kwargs)
+
+
+def response(status, arg_dict, /, *, cls=None, default=None):
+    try:
+        return {
+            'statusCode': int(status),
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps(arg_dict, cls=cls, default=default),
+        }
+    except Exception as e:
+        #log.exception(e)
+        msg = 'An exception occurred while generating the response.'
+        return response(500, {'msg': msg, 'exc': str(e)})
 
 
 def token_decrypt(arg_str, /, *, key=None):
