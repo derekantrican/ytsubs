@@ -65,7 +65,7 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     return r
 
 
-def response(status, arg_dict, /, cls=None, default=None):
+def response(status, arg_dict, /, *, cls=None, default=None):
     try:
         return {
             'statusCode': int(status),
