@@ -146,7 +146,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
             row = subs_table.get_item(Key={'api_key': f'{api_key},page{page}'}).get('Item')
             json_str = row.get('data')
             if json_str:
-                if set(json_str).issubset(urlsafe_b64_alphabet):
+                if set(json_str.rstrip('=')).issubset(urlsafe_b64_alphabet):
                     json_str = data_decompress(json_str)
                 data = json.loads(json_str)
                 all_subs.extend(data.get('items', []))
