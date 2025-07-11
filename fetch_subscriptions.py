@@ -60,14 +60,11 @@ def lambda_handler(event, context):
             data = cache['data']
             if data and set(data.rstrip('=')).issubset(urlsafe_b64_alphabet):
                 data = data_decompress(data)
-            all_subs = json.loads(data)
+            body = json.loads(data)
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
-                "body": json.dumps({
-                    "lastRetrievalDate": datetime_to_json(last_updated),
-                    "subscriptions": all_subs,
-                })
+                "body": body,
             }
 
     access_token = token_decrypt(user.get('youtube_access_token'))
@@ -170,18 +167,19 @@ def lambda_handler(event, context):
         }
 
     # Save new data to cache
-    response_data = data_compress(json.dumps(all_subs))
+    response_data = json.dumps(dict(
+        lastRetrievalDate=datetime_to_json(now_dt),
+        subscriptions=all_subs,
+    ))
+    compressed_data = data_compress(response_data)
     subs_table.put_item(Item={
         "api_key": api_key,
         "last_updated": datetime_to_db(now_dt),
-        "data": response_data
+        "data": compressed_data,
     })
 
     return {
         "statusCode": 200,
         "headers": {"Content-Type": "application/json"},
-        "body": json.dumps({
-            "lastRetrievalDate": datetime_to_json(now_dt),
-            "subscriptions": all_subs
-        })
+        "body": response_data,
     }
