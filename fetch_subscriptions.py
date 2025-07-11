@@ -1,5 +1,4 @@
 import json
-import datetime
 import urllib.request
 import urllib.parse
 import boto3
@@ -10,8 +9,8 @@ from utils import (
     dt_now as now,
     dt_to_db as datetime_to_db,
     dt_to_json as datetime_to_json,
-    dt_to_ts,
-    expire_after, newer_than,
+    dt_to_ts, expire_after, # noqa: F401
+    newer_than,
     token_decrypt, token_encrypt, token_hash,
     urlsafe_b64_alphabet,
 )
@@ -174,7 +173,7 @@ def lambda_handler(event, context):
     response_data = data_compress(json.dumps(all_subs))
     subs_table.put_item(Item={
         "api_key": api_key,
-        "last_updated": datetime_to_json(now_dt),
+        "last_updated": datetime_to_db(now_dt),
         "data": response_data
     })
 
