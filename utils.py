@@ -3,6 +3,7 @@ import boto3
 import collections
 import gzip
 import hashlib
+import json
 import logging
 import os
 
@@ -78,6 +79,19 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     elif integer:
         r = int(float(r))
     return r
+
+
+def response(status, arg_dict, /, *, cls=None, default=None):
+    try:
+        return {
+            'statusCode': int(status),
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps(arg_dict, cls=cls, default=default),
+        }
+    except Exception as e:
+        #log.exception(e)
+        msg = 'An exception occurred while generating the response.'
+        return response(500, {'msg': msg, 'exc': str(e)})
 
 
 def token_decrypt(arg_str, /, *, key=None):
