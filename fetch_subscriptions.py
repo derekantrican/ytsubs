@@ -1,5 +1,9 @@
 import boto3
 import json
+import os
+import queue
+import threading
+import time
 import urllib.parse
 import urllib.request
 from utils import (
@@ -9,6 +13,9 @@ from utils import (
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
 )
+
+to_compress = queue.SimpleQueue()
+was_compressed = queue.SimpleQueue()
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
@@ -110,6 +117,63 @@ def lambda_handler(event, context):
     }
 
 
+def add_task(q, *args, attempt=None, **kwargs):
+    forced = dict(
+        attempt=attempt or 0,
+        retry_backoff=kwargs.get('retry_backoff'),
+    )
+    if float(forced['retry_backoff'] or float()) < 1.1:
+        forced['retry_backoff'] = 1.1
+    task = dict(
+        retries=3,
+        retry_delay=0.2,
+        retry_backoff=2.25,
+    )
+    task.update(kwargs, **forced)
+    return q.put(task)
+
+
+def run_task(q_in, q_out, func, /):
+    empties = 0
+    while empties < 9:
+        try:
+            task = q.get(timeout=0.1)
+            empties = 0
+            try:
+                q_out.put( func(task) )
+            except Exception:
+                attempt = task.get('attempt') or 0
+                retries = task.get('retries') or 0
+                retry_delay = task.get('retry_delay') or 0.1
+                attempt += 1
+                if retries:
+                    retries -= 1
+                    task['retries'] = retries
+                    task['retry_delay'] = retry_delay * task['retry_backoff']
+                    time.sleep(retry_delay)
+                    add_task(q_in, attempt=attempt, **task)
+        except queue.Empty:
+            empties += 1
+
+
+def start_workers(number=None, /):
+    if number is None:
+        cpus = len(os.sched_getaffinity(0))
+        number = (cpus or 4) // 2
+    n = int(number)
+    while n > 0:
+        n -= 1
+        threading.Thread(
+            daemon=False,
+            target=run_task,
+            args=(
+                to_compress,
+                was_compressed,
+                compress_page,
+            ),
+        ).start()
+
+
 def refresh_access_token(refresh_token, *, user):
     token_url = "https://oauth2.googleapis.com/token"
     data = urllib.parse.urlencode({
@@ -131,6 +195,14 @@ def refresh_access_token(refresh_token, *, user):
     except Exception as e:
         print(f"Failed to refresh token: {e}")
     return None
+
+
+def compress_page(task, /):
+    # compress anything close to the limit
+    if task['size'] > (100 * 1024):
+        json_bytes = task['data']
+        task['data'] = data_compress(json_bytes)
+    return task
 
 
 def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
@@ -166,6 +238,7 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
     next_page_token = None
 
     with subs_table.batch_writer() as pages:
+        start_workers()
         while True:
             query = params.copy()
             if next_page_token:
@@ -176,15 +249,14 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
                 with urllib.request.urlopen(req) as response_obj:
                     json_bytes = response_obj.read()
                     data = json_bytes
-                    if len(data) > (300 * 1024):
-                        # compress anything close to the limit
-                        data = data_compress(json_bytes)
-                    pages.put_item(Item={
-                        'api_key': f'{api_key},page{page}',
-                        'last_updated': last_updated,
-                        'expire_at_ts': expire_at_ts,
-                        'data': data.decode(),
-                    })
+                    add_task(to_compress, dict(
+                        api_key=api_key,
+                        page_number=page,
+                        page_key=f'{api_key},page{page}',
+                        data=data,
+                        size=len(data),
+                        expires=expire_at_ts,
+                    ))
                     data = json.loads(json_bytes.decode())
                     all_subs.extend(data.get('items', []))
                     next_page_token = data.get('nextPageToken')
@@ -235,4 +307,20 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
                         })
                     }
                 raise e
-        return all_subs
+        # The earlier call likely still has workers available.
+        # But, just in case, we don't want to block because
+        # they all exited on an empty queue or miss any waiting tasks.
+        start_workers(2)
+        while True:
+            try:
+                completed_task = was_compressed.get()
+                data = completed_task['data']
+                pages.put_item(Item={
+                    'api_key': completed_task['page_key'],
+                    'last_updated': last_updated,
+                    'expire_at_ts': expire_at_ts,
+                    'data': data.decode(),
+                })
+            except queue.Empty:
+                break
+    return all_subs
