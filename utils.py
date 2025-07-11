@@ -10,6 +10,11 @@ import os
 
 
 _encrypted_token_prefix = '{encrypted}:'
+urlsafe_b64_alphabet = frozenset(
+    set('0123456789_-') |
+    set(base64._b32alphabet.decode().upper()) |
+    set(base64._b32alphabet.decode().lower())
+)
 
 
 def default_kms_key():
