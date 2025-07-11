@@ -3,7 +3,18 @@ import datetime
 import urllib.request
 import urllib.parse
 import boto3
-from utils import EnvGoogle, token_decrypt, token_encrypt, token_hash
+from utils import (
+    EnvGoogle,
+    data_compress, data_decompress,
+    dt_from_db as datetime_from_db,
+    dt_now as now,
+    dt_to_db as datetime_to_db,
+    dt_to_json as datetime_to_json,
+    dt_to_ts,
+    expire_after, newer_than,
+    token_decrypt, token_encrypt, token_hash,
+    urlsafe_b64_alphabet,
+)
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
@@ -19,23 +30,6 @@ def lambda_handler(event, context):
     if google_user_id:
         google_user_id_token = token_hash(google_user_id)
     google_user_id = None
-
-    def now():
-        return datetime.datetime.now(tz=datetime.timezone.utc)
-
-    def datetime_from_db(arg_str, /):
-        if arg_str.endswith('Z'):
-            arg_str = arg_str[:-1] + '+00:00'
-        return datetime.datetime.fromisoformat( arg_str )
-
-    def datetime_to_db(arg_dt, /):
-        return arg_dt.isoformat(timespec='seconds')
-
-    def datetime_to_json(arg_dt, /):
-        return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-
-    def newer_than(arg_dt, /, *args, **kwargs):
-        return arg_dt > (now() - datetime.timedelta(*args, **kwargs))
 
     if not api_key:
         return {
@@ -64,12 +58,16 @@ def lambda_handler(event, context):
     if cache:
         last_updated = datetime_from_db(cache['last_updated'])
         if newer_than(last_updated, hours=12):
+            data = cache['data']
+            if data and set(data).issubset(urlsafe_b64_alphabet):
+                data = data_decompress(data)
+            all_subs = json.loads(data)
             return {
                 "statusCode": 200,
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps({
                     "lastRetrievalDate": datetime_to_json(last_updated),
-                    "subscriptions": json.loads(cache['data'])
+                    "subscriptions": all_subs,
                 })
             }
 
@@ -164,7 +162,7 @@ def lambda_handler(event, context):
 
     try:
         all_subs = fetch_subs(access_token)
-        if isinstance(all_subs, dict) and all_subs.get("statusCode") == 403:
+        if isinstance(all_subs, dict) and "statusCode" in all_subs:
             return all_subs
     except Exception as e:
         return {
@@ -173,7 +171,7 @@ def lambda_handler(event, context):
         }
 
     # Save new data to cache
-    response_data = json.dumps(all_subs)
+    response_data = data_compress(json.dumps(all_subs))
     subs_table.put_item(Item={
         "api_key": api_key,
         "last_updated": datetime_to_json(now_dt),
