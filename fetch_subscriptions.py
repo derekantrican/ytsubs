@@ -58,7 +58,7 @@ def lambda_handler(event, context):
         last_updated = datetime_from_db(cache['last_updated'])
         if newer_than(last_updated, hours=12):
             data = cache['data']
-            if data and set(data).issubset(urlsafe_b64_alphabet):
+            if data and set(data.rstrip('=')).issubset(urlsafe_b64_alphabet):
                 data = data_decompress(data)
             all_subs = json.loads(data)
             return {
