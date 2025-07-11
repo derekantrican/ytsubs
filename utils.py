@@ -9,22 +9,9 @@ import os
 
 _encrypted_token_prefix = '{encrypted}:'
 
+
 def default_kms_key():
     return 'alias/ytsubs-token-encrypt-key'
-
-
-def getLog():
-    # Configure logging to sys.stderr
-    log = logging.getLogger(__name__)
-    _handler = logging.StreamHandler()
-    _handler.setLevel(logging.DEBUG)
-    log.addHandler(_handler)
-    try:
-        # set LOG_LEVEL to the minimum level that you wish to see
-        log.setLevel(getenv('LOG_LEVEL', logging.DEBUG))
-    except ValueError:
-        log.setLevel(logging.DEBUG)
-    return log
 
 
 def data_compress(s, /, *, encoding='utf-8', errors='strict'):
@@ -42,6 +29,20 @@ def data_decompress(s, /, *, encoding='utf-8', errors='strict'):
     if isinstance(s, str):
         return decompressed.decode(encoding=encoding, errors=errors)
     return decompressed
+
+
+def getLog():
+    # Configure logging to sys.stderr
+    log = logging.getLogger(__name__)
+    _handler = logging.StreamHandler()
+    _handler.setLevel(logging.DEBUG)
+    log.addHandler(_handler)
+    try:
+        # set LOG_LEVEL to the minimum level that you wish to see
+        log.setLevel(getenv('LOG_LEVEL', logging.DEBUG))
+    except ValueError:
+        log.setLevel(logging.DEBUG)
+    return log
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
