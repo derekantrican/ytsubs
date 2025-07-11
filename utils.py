@@ -5,7 +5,8 @@ import gzip
 import hashlib
 import json
 import os
-
+import gzip
+import json
 
 _encrypted_token_prefix = '{encrypted}:'
 
@@ -132,6 +133,33 @@ def urlsafe_b64decode(s, validate=True):
 
 def urlsafe_b64encode(s):
     return base64.urlsafe_b64encode(s)
+
+
+def compress_and_encode(data):
+    cleaned = [ # Removing some "extra" props from the YouTube data structure to save on DB space (etag, kind, & channelId - which is your own channelId, not the sub's id)
+        {
+            "id": item.get("id"),
+            "snippet": {
+                "publishedAt": item["snippet"].get("publishedAt"),
+                "title": item["snippet"].get("title"),
+                "description": item["snippet"].get("description"),
+                "resourceId": {
+                    "channelId": item["snippet"].get("resourceId", {}).get("channelId")
+                },
+                "thumbnails": item["snippet"].get("thumbnails")
+            }
+        }
+        for item in data
+    ]
+    json_data = json.dumps(cleaned).encode('utf-8')
+    compressed = gzip.compress(json_data)
+    return base64.b64encode(compressed).decode('utf-8')
+
+
+def decode_and_decompress(b64_data):
+    compressed = base64.b64decode(b64_data)
+    json_data = gzip.decompress(compressed)
+    return json.loads(json_data)
 
 
 GoogleEnvironment = collections.namedtuple(
