@@ -137,7 +137,7 @@ def run_task(q_in, q_out, func, /):
     empties = 0
     while empties < 9:
         try:
-            task = q.get(timeout=0.1)
+            task = q_in.get(timeout=0.1)
             empties = 0
             try:
                 q_out.put( func(task) )
