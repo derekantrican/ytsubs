@@ -39,20 +39,6 @@ def data_decompress(s, /, *, encoding='utf-8', errors='strict'):
     return decompressed
 
 
-def getLog():
-    # Configure logging to sys.stderr
-    log = logging.getLogger(__name__)
-    _handler = logging.StreamHandler()
-    _handler.setLevel(logging.DEBUG)
-    log.addHandler(_handler)
-    try:
-        # set LOG_LEVEL to the minimum level that you wish to see
-        log.setLevel(getenv('LOG_LEVEL', logging.DEBUG))
-    except ValueError:
-        log.setLevel(logging.DEBUG)
-    return log
-
-
 def dt_from_db(arg_str, /):
     if arg_str.endswith('Z'):
         arg_str = arg_str[:-1] + '+00:00'
@@ -87,6 +73,20 @@ def dt_to_ts(arg_dt, /, *, integer=True):
 
 def expire_after(arg_dt, /, *args, **kwargs):
     return arg_dt + datetime.timedelta(*args, **kwargs)
+
+
+def getLog():
+    # Configure logging to sys.stderr
+    log = logging.getLogger(__name__)
+    _handler = logging.StreamHandler()
+    _handler.setLevel(logging.DEBUG)
+    log.addHandler(_handler)
+    try:
+        # set LOG_LEVEL to the minimum level that you wish to see
+        log.setLevel(getenv('LOG_LEVEL', logging.DEBUG))
+    except ValueError:
+        log.setLevel(logging.DEBUG)
+    return log
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
