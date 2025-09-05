@@ -5,7 +5,7 @@ import urllib.parse
 import urllib.request
 from utils import (
     EnvGoogle, JSONEncoder,
-    data_compress, data_decompress, # noqa: F401
+    data_compress, data_decompress,
     dt_from_db, dt_now, dt_to_db, dt_to_json, dt_to_ts,
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
