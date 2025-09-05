@@ -8,7 +8,7 @@ import json
 import logging
 import math
 import os
-
+import textwrap
 
 _encrypted_token_prefix = '{encrypted}:'
 urlsafe_b64_alphabet = frozenset(
@@ -19,7 +19,7 @@ urlsafe_b64_alphabet = frozenset(
 
 
 def default_kms_key():
-    return 'alias/ytsubs-token-encrypt-key'
+    return getenv('YTSUBS_KMS_KEY', 'alias/ytsubs-token-encrypt-key')
 
 
 def data_compress(s, /, *, encoding='utf-8', errors='strict'):
@@ -189,6 +189,10 @@ def token_hash(arg_str, /):
     return hashlib.sha256(arg_bytes).hexdigest()
 
 
+def truncate(s, /, limit, *, placeholder=' …'):    
+    return textwrap.shorten(s, width=limit, placeholder=placeholder)
+
+
 def urlsafe_b64decode(s, validate=True):
     b = base64._bytes_from_decode_data(s)
     b = b.translate(base64._urlsafe_decode_translation)
@@ -197,6 +201,100 @@ def urlsafe_b64decode(s, validate=True):
 
 def urlsafe_b64encode(s):
     return base64.urlsafe_b64encode(s)
+
+
+def compress_and_encode(data):
+    cleaned = [ # Removing some "extra" props from the YouTube data structure to save on DB space (etag, kind, & channelId)
+        {
+            "id": item.get("id"),
+            "snippet": {
+                "publishedAt": item["snippet"].get("publishedAt"),
+                "title": item["snippet"].get("title"),
+                "description": item["snippet"].get("description"),
+                "resourceId": item["snippet"].get("resourceId"),
+                "thumbnails": item["snippet"].get("thumbnails")
+            }
+        }
+        for item in data
+    ]
+    json_data = json.dumps(cleaned).encode('utf-8')
+    compressed = gzip.compress(json_data)
+    return urlsafe_b64encode(compressed).decode('utf-8')
+
+
+def decode_and_decompress(b64_data):
+    compressed = urlsafe_b64decode(b64_data)
+    json_data = gzip.decompress(compressed)
+    return json.loads(json_data)
+
+
+def _get_duration_components(duration):
+    days = duration.days
+    seconds = duration.seconds
+    microseconds = duration.microseconds
+
+    minutes = seconds // 60
+    seconds %= 60
+
+    hours = minutes // 60
+    minutes %= 60
+
+    return days, hours, minutes, seconds, microseconds
+
+
+def duration_iso_string(duration):
+    if duration < datetime.timedelta(0):
+        sign = "-"
+        duration *= -1
+    else:
+        sign = ""
+
+    days, hours, minutes, seconds, microseconds = _get_duration_components(duration)
+    ms = ".{:06d}".format(microseconds) if microseconds else ""
+    return "{}P{}DT{:02d}H{:02d}M{:02d}{}S".format(
+        sign, days, hours, minutes, seconds, ms
+    )
+
+
+def is_aware(value):
+    return value.utcoffset() is not None
+
+class JSONEncoder(json.JSONEncoder):
+    item_separator = ','
+    key_separator = ':'
+
+    def default(self, obj):
+        try:
+            iterable = iter(obj)
+        except TypeError:
+            pass
+        else:
+            return list(iterable)
+        o = obj
+        if isinstance(o, datetime.datetime):
+            r = o.isoformat()
+            if o.microsecond:
+                r = r[:23] + r[26:]
+            if r.endswith("+00:00"):
+                r = r.removesuffix("+00:00") + "Z"
+            return r
+        elif isinstance(o, datetime.date):
+            return o.isoformat()
+        elif isinstance(o, datetime.time):
+            if is_aware(o):
+                raise ValueError("JSON can't represent timezone-aware times.")
+            r = o.isoformat()
+            if o.microsecond:
+                r = r[:12]
+            return r
+        elif isinstance(o, datetime.timedelta):
+            return duration_iso_string(o)
+        return super().default(obj)
+
+
+def json_serial(obj):
+    json_encoder = JSONEncoder()
+    return json_encoder.default(obj)
 
 
 GoogleEnvironment = collections.namedtuple(

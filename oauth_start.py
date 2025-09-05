@@ -30,8 +30,6 @@ def lambda_handler(event, context):
   "lastRetrievalDate": "2025-06-10T01:32:08.355395Z",
   "subscriptions": [
     {
-      "kind": "youtube#subscription",
-      "etag": "mep1K4OBALF4wrTFaXIYU-_xnsU",
       "id": "CWE0Bb1OftIKrp8FAk4EYe_MiDVd-mT-5vdiIOY_LVs",
       "snippet": {
         "publishedAt": "2018-01-03T21:42:30.834186Z",
@@ -41,7 +39,6 @@ def lambda_handler(event, context):
           "kind": "youtube#channel",
           "channelId": "UCY1kMZp36IQSyNx_9h4mpCg"
         },
-        "channelId": "UCPJHnEGx82NVaeJCYM_PFJg",
         "thumbnails": {
           "default": {
             "url": "https://yt3.ggpht.com/ytc/AIdro_ksXY2REjZ6gYKSgnWT5jC_zT9mX900vyFtVinR8KbHww=s88-c-k-c0x00ffffff-no-rj"
