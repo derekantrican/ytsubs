@@ -18,7 +18,7 @@ urlsafe_b64_alphabet = frozenset(
 
 
 def default_kms_key():
-    return 'alias/ytsubs-token-encrypt-key'
+    return getenv('YTSUBS_KMS_KEY', 'alias/ytsubs-token-encrypt-key')
 
 
 def data_compress(s, /, *, encoding='utf-8', errors='strict'):
