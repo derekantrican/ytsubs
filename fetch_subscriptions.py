@@ -93,7 +93,7 @@ def lambda_handler(event, context):
             now_dt=now_dt,
             user=user,
         )
-        if isinstance(all_subs, dict) and all_subs.get("statusCode") == 403:
+        if isinstance(all_subs, dict) and "statusCode" in all_subs:
             return all_subs
     except Exception as e:
         return {
