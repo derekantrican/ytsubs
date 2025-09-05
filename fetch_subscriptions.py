@@ -5,10 +5,11 @@ import urllib.parse
 import urllib.request
 from utils import (
     EnvGoogle, JSONEncoder,
-    data_compress, data_decompress, # noqa: F401
-    dt_from_db, dt_now, dt_to_db, dt_to_json,
+    data_compress, data_decompress,
+    dt_from_db, dt_now, dt_to_db, dt_to_json, dt_to_ts,
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
+    urlsafe_b64_alphabet,
     compress_and_encode, decode_and_decompress, getenv, truncate, # noqa: F401
 )
 
@@ -229,7 +230,7 @@ def fetch_subs(token, *, user, api_key, cache=None, max_pages=None, now_dt=None,
             row = subs_table.get_item(Key={'api_key': f'{api_key},page{page}'}).get('Item')
             json_str = row.get('data')
             if json_str:
-                if '"' not in json_str:
+                if set(json_str.rstrip('=')).issubset(urlsafe_b64_alphabet):
                     json_str = data_decompress(json_str)
                 data = json.loads(json_str)
                 all_subs.extend(data.get('items', []))
@@ -247,7 +248,7 @@ def fetch_subs(token, *, user, api_key, cache=None, max_pages=None, now_dt=None,
         "maxResults": str(per_page or 50),
     }
     base_url = "https://www.googleapis.com/youtube/v3/subscriptions"
-    expire_at_ts = round(expire_after(now_dt, hours=12).timestamp())
+    expire_at_ts = dt_to_ts(expire_after(now_dt, hours=12))
     last_updated = dt_to_db(now_dt)
     next_page_token = None
 

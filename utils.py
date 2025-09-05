@@ -5,10 +5,17 @@ import datetime
 import gzip
 import hashlib
 import json
+import logging
+import math
 import os
 import textwrap
 
 _encrypted_token_prefix = '{encrypted}:'
+urlsafe_b64_alphabet = frozenset(
+    set('0123456789_-') |
+    set(base64._b32alphabet.decode().upper()) |
+    set(base64._b32alphabet.decode().lower())
+)
 
 
 def default_kms_key():
@@ -22,6 +29,7 @@ def data_compress(s, /, *, encoding='utf-8', errors='strict'):
     if isinstance(s, str):
         return encoded.decode(encoding=encoding, errors=errors)
     return encoded
+
 
 def data_decompress(s, /, *, encoding='utf-8', errors='strict'):
     compressed = urlsafe_b64decode(s)
@@ -49,8 +57,36 @@ def dt_to_json(arg_dt, /):
     return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
 
 
+def dt_to_ts(arg_dt, /, *, integer=True):
+    dt = arg_dt
+    timestamp = int()
+    if arg_dt.utcoffset() is None:
+        td = arg_dt - datetime.datetime.fromtimestamp(0, tz=None)
+        timestamp = td.total_seconds()
+    else:
+        dt = arg_dt.astimezone(tz=datetime.timezone.utc)
+        timestamp = dt.timestamp()
+    if not integer:
+        return timestamp
+    return math.ceil(timestamp)
+
+
 def expire_after(arg_dt, /, *args, **kwargs):
     return arg_dt + datetime.timedelta(*args, **kwargs)
+
+
+def getLog():
+    # Configure logging to sys.stderr
+    log = logging.getLogger(__name__)
+    _handler = logging.StreamHandler()
+    _handler.setLevel(logging.DEBUG)
+    log.addHandler(_handler)
+    try:
+        # set LOG_LEVEL to the minimum level that you wish to see
+        log.setLevel(getenv('LOG_LEVEL', logging.DEBUG))
+    except ValueError:
+        log.setLevel(logging.DEBUG)
+    return log
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
@@ -92,6 +128,19 @@ def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
     if now_dt is None:
         now_dt = dt_now()
     return now_dt <= expire_after(arg_dt, *args, **kwargs)
+
+
+def response(status, arg_dict, /, *, cls=None, default=None):
+    try:
+        return {
+            'statusCode': int(status),
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps(arg_dict, cls=cls, default=default),
+        }
+    except Exception as e:
+        #log.exception(e)
+        msg = 'An exception occurred while generating the response.'
+        return response(500, {'msg': msg, 'exc': str(e)})
 
 
 def token_decrypt(arg_str, /, *, key=None):
