@@ -1,14 +1,21 @@
 import base64
 import boto3
 import collections
+import datetime
 import gzip
 import hashlib
 import json
 import logging
+import math
 import os
 
 
 _encrypted_token_prefix = '{encrypted}:'
+urlsafe_b64_alphabet = frozenset(
+    set('0123456789_-') |
+    set(base64._b32alphabet.decode().upper()) |
+    set(base64._b32alphabet.decode().lower())
+)
 
 
 def default_kms_key():
@@ -46,6 +53,42 @@ def getLog():
     return log
 
 
+def dt_from_db(arg_str, /):
+    if arg_str.endswith('Z'):
+        arg_str = arg_str[:-1] + '+00:00'
+    return datetime.datetime.fromisoformat( arg_str )
+
+
+def dt_now():
+    return datetime.datetime.now(tz=datetime.timezone.utc)
+
+
+def dt_to_db(arg_dt, /):
+    return arg_dt.isoformat(timespec='seconds')
+
+
+def dt_to_json(arg_dt, /):
+    return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+def dt_to_ts(arg_dt, /, *, integer=True):
+    dt = arg_dt
+    timestamp = int()
+    if arg_dt.utcoffset() is None:
+        td = arg_dt - datetime.datetime.fromtimestamp(0, tz=None)
+        timestamp = td.total_seconds()
+    else:
+        dt = arg_dt.astimezone(tz=datetime.timezone.utc)
+        timestamp = dt.timestamp()
+    if not integer:
+        return timestamp
+    return math.ceil(timestamp)
+
+
+def expire_after(arg_dt, /, *args, **kwargs):
+    return arg_dt + datetime.timedelta(*args, **kwargs)
+
+
 def getenv(key, default=None, /, *, integer=False, string=True):
     """
         Guarantees a returned type from calling `os.getenv`
@@ -79,6 +122,12 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     elif integer:
         r = int(float(r))
     return r
+
+
+def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
+    if now_dt is None:
+        now_dt = dt_now()
+    return now_dt <= expire_after(arg_dt, *args, **kwargs)
 
 
 def response(status, arg_dict, /, *, cls=None, default=None):
