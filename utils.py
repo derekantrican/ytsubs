@@ -1,12 +1,92 @@
 import base64
 import boto3
 import collections
+import datetime
+import gzip
 import hashlib
+import json
+import logging
+import math
 import os
+
+
+_encrypted_token_prefix = '{encrypted}:'
+urlsafe_b64_alphabet = frozenset(
+    set('0123456789_-') |
+    set(base64._b32alphabet.decode().upper()) |
+    set(base64._b32alphabet.decode().lower())
+)
 
 
 def default_kms_key():
     return 'alias/ytsubs-token-encrypt-key'
+
+
+def data_compress(s, /, *, encoding='utf-8', errors='strict'):
+    b = base64._bytes_from_decode_data(s)
+    compressed = gzip.compress(b)
+    encoded = urlsafe_b64encode(compressed)
+    if isinstance(s, str):
+        return encoded.decode(encoding=encoding, errors=errors)
+    return encoded
+
+
+def data_decompress(s, /, *, encoding='utf-8', errors='strict'):
+    compressed = urlsafe_b64decode(s)
+    decompressed = gzip.decompress(compressed)
+    if isinstance(s, str):
+        return decompressed.decode(encoding=encoding, errors=errors)
+    return decompressed
+
+
+def dt_from_db(arg_str, /):
+    if arg_str.endswith('Z'):
+        arg_str = arg_str[:-1] + '+00:00'
+    return datetime.datetime.fromisoformat( arg_str )
+
+
+def dt_now():
+    return datetime.datetime.now(tz=datetime.timezone.utc)
+
+
+def dt_to_db(arg_dt, /):
+    return arg_dt.isoformat(timespec='seconds')
+
+
+def dt_to_json(arg_dt, /):
+    return arg_dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+def dt_to_ts(arg_dt, /, *, integer=True):
+    dt = arg_dt
+    timestamp = int()
+    if arg_dt.utcoffset() is None:
+        td = arg_dt - datetime.datetime.fromtimestamp(0, tz=None)
+        timestamp = td.total_seconds()
+    else:
+        dt = arg_dt.astimezone(tz=datetime.timezone.utc)
+        timestamp = dt.timestamp()
+    if not integer:
+        return timestamp
+    return math.ceil(timestamp)
+
+
+def expire_after(arg_dt, /, *args, **kwargs):
+    return arg_dt + datetime.timedelta(*args, **kwargs)
+
+
+def getLog(name=None):
+    # Configure logging to sys.stderr
+    log = logging.getLogger(name)
+    _handler = logging.StreamHandler()
+    _handler.setLevel(logging.DEBUG)
+    log.addHandler(_handler)
+    try:
+        # set LOG_LEVEL to the minimum level that you wish to see
+        log.setLevel(getenv('LOG_LEVEL', logging.DEBUG))
+    except ValueError:
+        log.setLevel(logging.DEBUG)
+    return log
 
 
 def getenv(key, default=None, /, *, integer=False, string=True):
@@ -44,12 +124,32 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     return r
 
 
+def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
+    if now_dt is None:
+        now_dt = dt_now()
+    return now_dt <= expire_after(arg_dt, *args, **kwargs)
+
+
+def response(status, arg_dict, /, *, cls=None, default=None):
+    try:
+        return {
+            'statusCode': int(status),
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps(arg_dict, cls=cls, default=default),
+        }
+    except Exception as e:
+        #log.exception(e)
+        msg = 'An exception occurred while generating the response.'
+        return response(500, {'msg': msg, 'exc': str(e)})
+
+
 def token_decrypt(arg_str, /, *, key=None):
-    return arg_str
-
-
-def test_token_decrypt(arg_str, /, *, key=None):
-    arg_bytes = urlsafe_b64decode(arg_str, validate=False)
+    # not marked as encrypted
+    if not arg_str.startswith(_encrypted_token_prefix):
+        return arg_str
+    # decrypt the string without the prefix
+    prefix_len = len(_encrypted_token_prefix)
+    arg_bytes = urlsafe_b64decode(arg_str[ prefix_len :])
     kms = boto3.client('kms')
     if key is None:
         response = kms.decrypt(CiphertextBlob=arg_bytes)
@@ -61,10 +161,10 @@ def test_token_decrypt(arg_str, /, *, key=None):
 
 
 def token_encrypt(arg_str, /, *, key=None):
-    return arg_str
-
-
-def test_token_encrypt(arg_str, /, *, key=None):
+    o = arg_str
+    # already marked as encrypted
+    if arg_str.startswith(_encrypted_token_prefix):
+        return arg_str
     if key is None:
         key = default_kms_key()
     assert key is not None, 'token_encrypt requires a KMS key identifier'
@@ -74,7 +174,12 @@ def test_token_encrypt(arg_str, /, *, key=None):
     encrypted_bytes = response['CiphertextBlob']
     result_bytes = urlsafe_b64encode(encrypted_bytes)
     result_str = result_bytes.decode()
-    return result_str
+    e = _encrypted_token_prefix + result_str
+    # verify that we can decrypt the result
+    d = token_decrypt(e, key=key)
+    if d == o:
+        return e
+    return o
 
 
 def token_hash(arg_str, /):
@@ -87,9 +192,7 @@ def token_hash(arg_str, /):
 def urlsafe_b64decode(s, validate=True):
     b = base64._bytes_from_decode_data(s)
     b = b.translate(base64._urlsafe_decode_translation)
-    if not validate:
-        b += b'=='
-    return base64.b64decode(s, validate=validate)
+    return base64.b64decode(b, validate=validate)
 
 
 def urlsafe_b64encode(s):
