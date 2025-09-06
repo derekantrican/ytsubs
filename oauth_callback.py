@@ -4,10 +4,11 @@ import urllib.request
 import boto3
 import html
 import secrets
-from utils import EnvGoogle, token_encrypt, token_hash
+from utils import EnvGoogle, getLog, token_encrypt, token_hash
 
 dynamodb = boto3.resource('dynamodb')
 keys_table = dynamodb.Table('ytsubs_api_keys')
+log = getLog(__name__)
 mapping_table = dynamodb.Table('ytsubs_user_to_api')
 
 def lambda_handler(event, context):
@@ -114,7 +115,8 @@ def lambda_handler(event, context):
     except:
         pass
 
-    if api_key is None: 
+    if api_key is None:
+        log.warning('scanning the keys table')
         try:
             response = keys_table.scan(
                 FilterExpression="google_user_id_token = :u",
@@ -127,6 +129,7 @@ def lambda_handler(event, context):
 
     # Generate a new token
     if api_key is None:
+        log.info('generating a new API key')
         api_key = secrets.token_urlsafe(30)  # 40-ish character random string
 
     # Create or update user record
