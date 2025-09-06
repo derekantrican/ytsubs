@@ -1,6 +1,5 @@
 import boto3
 import json
-import logging
 import urllib.parse
 import urllib.request
 from utils import (
@@ -9,21 +8,10 @@ from utils import (
     dt_from_db, dt_now, dt_to_db, dt_to_json, dt_to_ts,
     expire_after, newer_than,
     token_decrypt, token_encrypt, token_hash,
-    urlsafe_b64_alphabet,
-    compress_and_encode, decode_and_decompress, getenv, truncate, # noqa: F401
+    urlsafe_b64_alphabet, getLog,
 )
 
-# Configure logging to sys.stderr
-log = logging.getLogger(__name__)
-_handler = logging.StreamHandler()
-_handler.setLevel(logging.DEBUG)
-log.addHandler(_handler)
-del _handler
-try:
-    # set LOG_LEVEL to the minimum level that you wish to see
-    log.setLevel(getenv('LOG_LEVEL', logging.DEBUG))
-except ValueError:
-    log.setLevel(logging.DEBUG)
+log = getLog(__name__)
 
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')

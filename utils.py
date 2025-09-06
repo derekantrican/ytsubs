@@ -75,9 +75,9 @@ def expire_after(arg_dt, /, *args, **kwargs):
     return arg_dt + datetime.timedelta(*args, **kwargs)
 
 
-def getLog():
+def getLog(name=None):
     # Configure logging to sys.stderr
-    log = logging.getLogger(__name__)
+    log = logging.getLogger(name)
     _handler = logging.StreamHandler()
     _handler.setLevel(logging.DEBUG)
     log.addHandler(_handler)
