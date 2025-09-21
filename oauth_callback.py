@@ -142,7 +142,7 @@ def lambda_handler(event, context):
         <link rel="stylesheet" href="https://static.ytsubs.app/callback.css" blocking="render" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
-        <title>Your YTSubs: Subscription Exporter API Key</title>
+        <title>YTSubs: Subscription Exporter API Key</title>
     </head>
     <body>
         <h1>Welcome, {html.escape(email)}</h1>
