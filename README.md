@@ -8,12 +8,12 @@ YTSubs is a serverless web service that allows users to authenticate with their 
 
 This was mostly built with ChatGPT, so please provide feedback where things could be improved.
 
-## 🌐 Live URL
+## Live URL
 
 > [https://ytsubs.app](https://ytsubs.app)
 
 
-## 🎯 Features
+## Features
 
 - Google OAuth2 login with YouTube access (`read-only`)
 - Serverless infrastructure using AWS Lambda & API Gateway
@@ -37,7 +37,7 @@ graph TD
     LambdaFetch --> Cache[DynamoDB: ytsubs_subscriptions_cache]
 ```
 
-## 📁 Repo Structure
+## Repo Structure
 
 ```
 ytsubs-lambdas/
@@ -51,7 +51,7 @@ ytsubs-lambdas/
 ````
 
 
-## 💾 DynamoDB Tables
+## DynamoDB Tables
 
 - `ytsubs_api_keys`  
   Stores user-specific API keys, and YouTube access/refresh tokens
@@ -60,14 +60,14 @@ ytsubs-lambdas/
   Caches YouTube subscription data per user (12-hour TTL)
 
 
-## 🧪 API Usage
+## API Usage
 
-### 🔹 Authenticate User
+### Authenticate User
 1. Visit [https://ytsubs.app](https://ytsubs.app)
 2. Sign in with Google
 3. Receive API key
 
-### 🔹 Get Subscriptions
+### Get Subscriptions
 
 ```bash
 curl "https://ytsubs.app/subscriptions?api_key=YOUR_API_KEY"
@@ -82,13 +82,13 @@ Returns:
 }
 ```
 
-## 🔄 Future Improvements that could be considered
+## Future Improvements that could be considered
 
-* 🧱 CloudFront for caching and rate limiting
-* 📈 Per-user usage metrics
-* 🌍 Multi-region redundancy
+* CloudFront for caching and rate limiting
+* Per-user usage metrics
+* Multi-region redundancy
 
-## 🧠 Notes
+## Notes
 
 * API Gateway custom domain managed via Cloudflare (`ytsubs.app`)
 * TLS certificate issued via AWS ACM (auto-renewing via DNS validation)
