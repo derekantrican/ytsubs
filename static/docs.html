@@ -26,7 +26,7 @@
       display:flex;
       align-items:flex-start;
       justify-content:center;
-      padding:48px 20px;
+      padding:80px 20px 48px; /* add space for sticky navbar */
     }
 
     .wrap{
@@ -34,18 +34,37 @@
       max-width:1000px;
     }
 
-    header{
+    /* Sticky navbar */
+    nav {
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
       display:flex;
-      gap:16px;
       align-items:center;
-      margin-bottom:28px;
+      justify-content:space-between;
+      padding:10px 20px;
+      z-index:1000;
     }
-    .logo{
-      width:64px;
-      height:64px;
+    nav .nav-left{
+      display:flex;
+      align-items:center;
+      gap:10px;
     }
-    h1{margin:0;font-size:20px}
-    p.lead{margin:4px 0 0;color:var(--muted)}
+    nav img.logo{
+      width:40px;
+      height:40px;
+    }
+    nav .nav-links a{
+      color:var(--text);
+      text-decoration:none;
+      margin-left:20px;
+      font-size:14px;
+      font-weight:500;
+    }
+    nav .nav-links a:hover{
+      color:var(--accent);
+    }
 
     main{
       background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
@@ -93,15 +112,8 @@
 
     .example{
       display:grid;
-      grid-template-columns:1fr 360px;
+      grid-template-columns:1fr;
       gap:16px;
-    }
-    .note{
-      background:var(--chip-bg);
-      padding:10px 12px;
-      border-radius:8px;
-      font-size:13px;
-      border:1px solid rgba(255,255,255,0.02);
     }
 
     footer{
@@ -111,17 +123,25 @@
     }
 
     @media (max-width:880px){
-      .example{grid-template-columns:1fr}
+      nav .nav-links a{margin-left:12px}
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <img class="logo" src="https://static.ytsubs.app/logo.png"/>
-      <h1>YTSubs API Documentation</h1>
-    </header>
+  <nav>
+    <div class="nav-left">
+      <img class="logo" src="https://static.ytsubs.app/logo.png" alt="YTSubs Logo"/>
+      <strong>YTSubs</strong>
+    </div>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/docs.html">Docs</a>
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
+    </div>
+  </nav>
 
+  <div class="wrap">
     <main>
       <section>
         <h2>Base URL</h2>
@@ -156,12 +176,10 @@
             <td>Results are cached per user and refreshed at most once every <strong>12 hours</strong>. If cache age &lt; 12h, cached data is returned immediately.</td>
           </tr>
         </table>
-
       </section>
 
       <section>
-        <h2>Examples</h2>
-
+        <h2>Example</h2>
         <div class="example">
           <div>
             <h3 class="muted">cURL</h3>
@@ -185,19 +203,6 @@
   ]
 }</pre>
           </div>
-
-          <aside class="note">
-            <strong>Errors you might see</strong>
-            <br>
-            <br>
-            <code>401</code> — Missing api_key or youtube token
-            <br>
-            <br>
-            <code>403</code> — YTSubs access to YouTube has been revoked
-            <br>
-            <br>
-            <code>500</code> — Internal error (e.g., YouTube API, network problem)
-          </aside>
         </div>
       </section>
 
@@ -209,6 +214,16 @@
           <li>Gracefully handle 403/401 responses — prompt the user to re-authenticate</li>
           <li>If you need a fresh result, call the endpoint — it will refresh the cached copy if 12+ hours old</li>
         </ol>
+      </section>
+
+      <section>
+        <h2>Errors</h2>
+        <p class="muted">All endpoints may return these errors:</p>
+        <ul style="line-height:1.6">
+          <li><code>401</code> — Missing api_key or YouTube token</li>
+          <li><code>403</code> — YTSubs access to YouTube has been revoked</li>
+          <li><code>500</code> — Internal error (e.g., YouTube API, network problem)</li>
+        </ul>
       </section>
 
       <footer>
