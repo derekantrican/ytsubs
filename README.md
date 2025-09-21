@@ -10,7 +10,7 @@ This was mostly built with ChatGPT, so please provide feedback where things coul
 
 ## Live URL
 
-> [https://ytsubs.app](https://ytsubs.app)
+[https://ytsubs.app](https://ytsubs.app)
 
 
 ## Features
@@ -51,21 +51,7 @@ ytsubs-lambdas/
 ````
 
 
-## DynamoDB Tables
-
-- `ytsubs_api_keys`  
-  Stores user-specific API keys, and YouTube access/refresh tokens
-
-- `ytsubs_subscriptions_cache`  
-  Caches YouTube subscription data per user (12-hour TTL)
-
-
 ## API Usage
-
-### Authenticate User
-1. Visit [https://ytsubs.app](https://ytsubs.app)
-2. Sign in with Google
-3. Receive API key
 
 ### Get Subscriptions
 
@@ -82,15 +68,8 @@ Returns:
 }
 ```
 
-## Future Improvements that could be considered
+## Possible future improvements
 
 * CloudFront for caching and rate limiting
 * Per-user usage metrics
 * Multi-region redundancy
-
-## Notes
-
-* API Gateway custom domain managed via Cloudflare (`ytsubs.app`)
-* TLS certificate issued via AWS ACM (auto-renewing via DNS validation)
-* GitHub Actions deploys `.py` files directly using zipped CLI update
-
