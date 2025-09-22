@@ -61,6 +61,18 @@ def lambda_handler(event, context):
                 <link rel="stylesheet" href="https://static.ytsubs.app/callback_expired.css" blocking="render" />
             </head>
             <body>
+                <nav>
+                    <div class="nav-left">
+                        <img class="logo" src="https://static.ytsubs.app/logo.png" alt="YTSubs Logo"/>
+                        <strong>YTSubs</strong>
+                    </div>
+                    <div class="nav-links">
+                        <a href="/">Home</a>
+                        <a href="https://static.ytsubs.app/docs.html">Docs</a>
+                        <a href="https://static.ytsubs.app/privacypolicy.html">Privacy Policy</a>
+                        <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
+                    </div>
+                </nav>
                 <h1>OAuth Link Expired</h1>
                 <p>Your authorization link has expired or is invalid.</p>
                 <p>Please <a href="https://ytsubs.app">go back to the homepage</a> and try again.</p>
@@ -145,6 +157,18 @@ def lambda_handler(event, context):
         <title>YTSubs: Subscription Exporter API Key</title>
     </head>
     <body>
+        <nav>
+            <div class="nav-left">
+                <img class="logo" src="https://static.ytsubs.app/logo.png" alt="YTSubs Logo"/>
+                <strong>YTSubs</strong>
+            </div>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="https://static.ytsubs.app/docs.html">Docs</a>
+                <a href="https://static.ytsubs.app/privacypolicy.html">Privacy Policy</a>
+                <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
+            </div>
+        </nav>
         <h1>Welcome, {html.escape(email)}</h1>
         <p>Your API key is:</p>
         <code>{html.escape(api_key)}</code>

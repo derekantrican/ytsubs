@@ -70,6 +70,18 @@ def lambda_handler(event, context):
         <title>YTSubs: Subscription Exporter</title>
     </head>
     <body>
+        <nav>
+          <div class="nav-left">
+            <img class="logo" src="https://static.ytsubs.app/logo.png" alt="YTSubs Logo"/>
+            <strong>YTSubs</strong>
+          </div>
+          <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="https://static.ytsubs.app/docs.html">Docs</a>
+            <a href="https://static.ytsubs.app/privacypolicy.html">Privacy Policy</a>
+            <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
+          </div>
+        </nav>
         <img class="logo" src="https://static.ytsubs.app/logo.png"/>
         <h1>Welcome to YTSubs: Subscription Exporter</h1>
         <p>A simple service to fetch and cache your YouTube subscriptions using the YouTube Data API.</p>
