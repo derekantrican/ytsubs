@@ -6,10 +6,12 @@ import urllib.request
 
 import boto3
 
-from utils import EnvGoogle, token_encrypt, token_hash
+from utils import EnvGoogle, getLog, token_encrypt, token_hash
 
 dynamodb = boto3.resource('dynamodb')
 keys_table = dynamodb.Table('ytsubs_api_keys')
+log = getLog(__name__)
+mapping_table = dynamodb.Table('ytsubs_user_to_api')
 
 def lambda_handler(event, context):
     params = event.get('queryStringParameters') or {}
@@ -115,23 +117,34 @@ def lambda_handler(event, context):
         }
 
     google_user_id_token = token_hash(google_user_id)
+    google_user_id = None
 
     # Check if user already exists
+    api_key = None
     try:
-        response = keys_table.scan(
-            FilterExpression="google_user_id_token = :u",
-            ExpressionAttributeValues={":u": google_user_id_token}
-        )
-        items = response.get("Items", [])
-    except Exception as e:  # noqa: BLE001 - top-level handler must convert any failure into an HTTP response
-        return {
-            "statusCode": 500,
-            "body": f"DynamoDB scan failed: {e!s}"
-        }
+        response = mapping_table.get_item(Key={
+            'google_user_id_token': google_user_id_token,
+        })
+        item = response.get('Item', {})
+        api_key = item.get('api_key') or None
+    except Exception as e:  # noqa: BLE001 - fall through to the keys-table scan on any lookup failure
+        log.debug('mapping table lookup failed: %s', e)
 
-    if items:
-        api_key = items[0]["api_key"]
-    else:
+    if api_key is None:
+        log.warning('scanning the keys table')
+        try:
+            response = keys_table.scan(
+                FilterExpression="google_user_id_token = :u",
+                ExpressionAttributeValues={":u": google_user_id_token}
+            )
+            first_item = response.get("Items", [{}])[0]
+            api_key = first_item.get('api_key') or None
+        except Exception as e:  # noqa: BLE001 - fall through to generating a new key on any lookup failure
+            log.debug('keys table scan failed: %s', e)
+
+    # Generate a new token
+    if api_key is None:
+        log.info('generating a new API key')
         api_key = secrets.token_urlsafe(30)  # 40-ish character random string
 
     # Create or update user record
@@ -147,6 +160,15 @@ def lambda_handler(event, context):
             "statusCode": 500,
             "body": f"Failed to store user in DynamoDB: {e!s}"
         }
+    else:
+        # Attempt to optimize future lookups
+        try:
+            mapping_table.put_item(Item={
+                "google_user_id_token": google_user_id_token,
+                "api_key": api_key,
+            })
+        except Exception as e:  # noqa: BLE001 - this is a best-effort cache write, not required for correctness
+            log.debug('mapping table write failed: %s', e)
 
     # Return dark-themed HTML with API key and curl command
     document_str = f'''\
