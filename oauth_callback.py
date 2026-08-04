@@ -58,6 +58,7 @@ def lambda_handler(event, context):
             "body": '''
             <html>
             <head>
+                <link rel="stylesheet" href="https://static.ytsubs.app/common.css" blocking="render" />
                 <link rel="stylesheet" href="https://static.ytsubs.app/callback_expired.css" blocking="render" />
             </head>
             <body>
@@ -151,6 +152,7 @@ def lambda_handler(event, context):
     <html lang="en">
     <head>
         <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon" />
+        <link rel="stylesheet" href="https://static.ytsubs.app/common.css" blocking="render" />
         <link rel="stylesheet" href="https://static.ytsubs.app/callback.css" blocking="render" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">

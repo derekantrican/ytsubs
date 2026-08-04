@@ -1,0 +1,40 @@
+:root{
+  --panel: #0f1720;
+  --muted: #9aa6b2;
+  --accent: #dc370f;
+  --text: #e6eef6;
+  --code-bg: #081018;
+  --chip-bg: rgba(220, 55, 15, 0.7);
+}
+
+/* Sticky navbar */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  z-index: 1000;
+}
+nav .nav-left{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+nav img.logo{
+  width: 40px;
+  height: 40px;
+}
+nav .nav-links a{
+  color: var(--text);
+  text-decoration: none;
+  margin-left: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+nav .nav-links a:hover{
+  color: var(--accent);
+}
