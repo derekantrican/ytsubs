@@ -106,12 +106,12 @@ def lambda_handler(event, context):
                 client.update_time_to_live(
                     TableName=table_name,
                     TimeToLiveSpecification={
-                        'Enabled': True if 'E' == v else False,
+                        'Enabled': 'E' == v,
                         'AttributeName': attr_name,
                     },
                 )
             )
-    except Exception as e:
+    except Exception as e:  # ruff: ignore[BLE001]
         return response(500, dict(msg='An exception occurred.', exc=str(e)))
 
     # Check if data is cached
@@ -159,13 +159,14 @@ def lambda_handler(event, context):
         if isinstance(all_subs, dict) and "statusCode" in all_subs:
             log.debug("returned {all_subs.get('statusCode', '???')}")
             return all_subs
-    except Exception as e:  # noqa: BLE001 - top-level handler must convert any failure into an HTTP response
-        log.exception(e)
-        body = dict(msg='Error fetching from YouTube.')
+    except Exception as e:  # ruff: ignore[BLE001]
+        msg = 'Error fetching from YouTube.'
+        log.exception(msg)
+        body = dict(msg=msg)
         try:
             json.dumps(body | dict(exc=str(e)))
-        except Exception as ee:
-            log.exception(ee)
+        except Exception:
+            log.exception('Failed to encode exception.')
         else:
             body.update(dict(exc=str(e)), **body)
         return response(500, body)
@@ -187,8 +188,8 @@ def response(status, arg_dict, /):
             'body': json.dumps(arg_dict, cls=JSONEncoder),
         }
     except Exception as e:
-        log.exception(e)
         msg = 'An exception occurred while generating the response.'
+        log.exception(msg)
         return response(500, {'msg': msg, 'exc': str(e)})
 
 
