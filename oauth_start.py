@@ -1,6 +1,8 @@
 import html
 import urllib.parse
+
 from utils import EnvGoogle
+
 
 def lambda_handler(event, context):
     api_auth_base_url = 'https://www.googleapis.com/auth'
@@ -13,14 +15,14 @@ def lambda_handler(event, context):
         f'{api_auth_base_url}/youtube.readonly',
     ))
 
-    qsl = list((
-        ('access_type', 'offline',),
-        ('client_id', EnvGoogle.client_id,),
-        ('prompt', 'consent',),
-        ('redirect_uri', EnvGoogle.redirect_uri,),
-        ('response_type', 'code',),
-        ('scope', scope,),
-    ))
+    qsl = [
+        ('access_type', 'offline'),
+        ('client_id', EnvGoogle.client_id),
+        ('prompt', 'consent'),
+        ('redirect_uri', EnvGoogle.redirect_uri),
+        ('response_type', 'code'),
+        ('scope', scope),
+    ]
     encoded_qsl = urllib.parse.urlencode(qsl)
 
     auth_url = f'{oauth_base_url}?{encoded_qsl}'

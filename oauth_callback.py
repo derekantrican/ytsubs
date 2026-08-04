@@ -1,9 +1,11 @@
+import html
 import json
+import secrets
 import urllib.parse
 import urllib.request
+
 import boto3
-import html
-import secrets
+
 from utils import EnvGoogle, token_encrypt, token_hash
 
 dynamodb = boto3.resource('dynamodb')
@@ -97,10 +99,10 @@ def lambda_handler(event, context):
         req = urllib.request.Request("https://www.googleapis.com/oauth2/v2/userinfo", headers=headers)
         with urllib.request.urlopen(req) as resp:
             profile = json.loads(resp.read().decode())
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level handler must convert any failure into an HTTP response
         return {
             "statusCode": 500,
-            "body": f"Error fetching user profile: {str(e)}"
+            "body": f"Error fetching user profile: {e!s}"
         }
 
     email = profile.get("email")
@@ -121,10 +123,10 @@ def lambda_handler(event, context):
             ExpressionAttributeValues={":u": google_user_id_token}
         )
         items = response.get("Items", [])
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level handler must convert any failure into an HTTP response
         return {
             "statusCode": 500,
-            "body": f"DynamoDB scan failed: {str(e)}"
+            "body": f"DynamoDB scan failed: {e!s}"
         }
 
     if items:
@@ -140,10 +142,10 @@ def lambda_handler(event, context):
             "youtube_access_token": token_encrypt(access_token),
             "youtube_refresh_token": token_encrypt(refresh_token),
         })
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level handler must convert any failure into an HTTP response
         return {
             "statusCode": 500,
-            "body": f"Failed to store user in DynamoDB: {str(e)}"
+            "body": f"Failed to store user in DynamoDB: {e!s}"
         }
 
     # Return dark-themed HTML with API key and curl command

@@ -1,13 +1,23 @@
-import boto3
 import json
 import urllib.parse
 import urllib.request
+
+import boto3
+
 from utils import (
     EnvGoogle,
-    data_compress, data_decompress,
-    dt_from_db, dt_now, dt_to_db, dt_to_json, dt_to_ts,
-    expire_after, newer_than,
-    token_decrypt, token_encrypt, token_hash,
+    data_compress,
+    data_decompress,
+    dt_from_db,
+    dt_now,
+    dt_to_db,
+    dt_to_json,
+    dt_to_ts,
+    expire_after,
+    newer_than,
+    token_decrypt,
+    token_encrypt,
+    token_hash,
     urlsafe_b64_alphabet,
 )
 
@@ -71,9 +81,8 @@ def lambda_handler(event, context):
                     now_dt=now_dt,
                     user=user,
                 )
-            except:
-                # get new pages from YouTube later
-                pass
+            except Exception as e:  # noqa: BLE001 - fall through to a fresh fetch on any cache-read failure
+                print(f"Failed to read cached subscription pages, will refetch: {e!s}")
             else:
                 # send the cached data
                 return {
@@ -95,10 +104,10 @@ def lambda_handler(event, context):
         )
         if isinstance(all_subs, dict) and "statusCode" in all_subs:
             return all_subs
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level handler must convert any failure into an HTTP response
         return {
             "statusCode": 500,
-            "body": f"Error fetching from YouTube: {str(e)}"
+            "body": f"Error fetching from YouTube: {e!s}"
         }
 
     return {
@@ -129,7 +138,7 @@ def refresh_access_token(refresh_token, *, user):
                 user['youtube_access_token'] = token_encrypt(new_token)
                 keys_table.put_item(Item=user)
                 return new_token
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - any failure here just means "couldn't refresh"; caller falls back to None
         print(f"Failed to refresh token: {e}")
     return None
 
@@ -235,5 +244,5 @@ def fetch_subs(token, *, user, api_key, cache=None, now_dt=None):
                             "error": "Access to YouTube was denied. Please visit https://ytsubs.app and sign in again, ensuring you grant YouTube access."
                         })
                     }
-                raise e
+                raise
         return all_subs
