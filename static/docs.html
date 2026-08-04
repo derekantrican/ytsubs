@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YTSubs: Documentation</title>
+  <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://static.ytsubs.app/common.css" blocking="render" />
+  <link rel="stylesheet" href="https://static.ytsubs.app/docs.css" blocking="render" />
+</head>
+<body>
+  <nav>
+    <div class="nav-left">
+      <img class="logo" src="https://static.ytsubs.app/logo.png" alt="YTSubs Logo"/>
+      <strong>YTSubs</strong>
+    </div>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="https://static.ytsubs.app/docs.html">Docs</a>
+      <a href="https://static.ytsubs.app/privacypolicy.html">Privacy Policy</a>
+      <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <main>
+      <section>
+        <h2>Base URL</h2>
+        https://ytsubs.app
+      </section>
+
+      <section>
+        <h2>Endpoint — <code>/subscriptions</code></h2>
+        <div class="muted">Return a user's YouTube subscriptions (cached). This endpoint requires both <code>api_key</code> and <code>google_user_id</code> (or google_user_id_token depending on your setup)</div>
+
+        <table class="spec" aria-describedby="parameters">
+          <tr>
+            <th>HTTP Method</th>
+            <td><strong>GET</strong></td>
+          </tr>
+          <tr>
+            <th>Path</th>
+            <td><code>/subscriptions</code></td>
+          </tr>
+          <tr>
+            <th>Query Parameters</th>
+            <td>
+              <strong>api_key</strong> (required) — the API key assigned to the user<br>
+            </td>
+          </tr>
+          <tr>
+            <th>Authentication</th>
+            <td>API key validated against an internal users table</td>
+          </tr>
+          <tr>
+            <th>Caching</th>
+            <td>Results are cached per user and refreshed at most once every <strong>12 hours</strong>. If cache age &lt; 12h, cached data is returned immediately.</td>
+          </tr>
+        </table>
+      </section>
+
+      <section>
+        <h2>Example</h2>
+        <div class="example">
+          <div>
+            <h3 class="muted">cURL</h3>
+            <pre class="code">curl https://ytsubs.app/subscriptions?api_key=YOUR_API_KEY</pre>
+
+            <h3 class="muted">Response (200 OK)</h3>
+            <pre class="code">{
+  "lastRetrievalDate": "2025-07-03T22:12:00Z",
+  "subscriptions": [
+    {
+      "id": "CWE0Bb1OftI...",
+      "snippet": {
+        "publishedAt": "2018-01-03T21:42:30.834186Z",
+        "title": "Mark Rober",
+        "description": "Former NASA engineer...",
+        "resourceId": { "channelId": "UCY1kMZp36I..." },
+        "thumbnails": { "default": { "url": "https://..." } }
+      }
+    },
+    ...
+  ]
+}</pre>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Best Practices</h2>
+        <ol style="color:var(--muted);line-height:1.5">
+          <li>Never embed an API key in client-side code or public repos</li>
+          <li>Cache responses client-side where possible to avoid repeated API calls</li>
+          <li>Gracefully handle 403/401 responses — prompt the user to re-authenticate</li>
+          <li>If you need a fresh result, call the endpoint — it will refresh the cached copy if 12+ hours old</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Errors</h2>
+        <p class="muted">All endpoints may return these errors:</p>
+        <ul style="line-height:1.6">
+          <li><code>401</code> — Missing api_key or YouTube token</li>
+          <li><code>403</code> — YTSubs access to YouTube has been revoked</li>
+          <li><code>500</code> — Internal error (e.g., YouTube API, network problem)</li>
+        </ul>
+      </section>
+
+      <footer>
+        <div>Contact / Support: <a href="mailto:support@ytsubs.app" style="color:var(--accent)">support@ytsubs.app</a></div>
+        <div style="margin-top:6px" class="muted">Last updated: September 2025</div>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

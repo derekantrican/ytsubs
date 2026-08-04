@@ -1,5 +1,4 @@
 import base64
-import boto3
 import collections
 import datetime
 import gzip
@@ -9,6 +8,7 @@ import logging
 import math
 import os
 
+import boto3
 
 _encrypted_token_prefix = '{encrypted}:'
 urlsafe_b64_alphabet = frozenset(
@@ -59,13 +59,12 @@ def dt_to_json(arg_dt, /):
 
 def dt_to_ts(arg_dt, /, *, integer=True):
     dt = arg_dt
-    timestamp = int()
     if arg_dt.utcoffset() is None:
-        td = arg_dt - datetime.datetime.fromtimestamp(0, tz=None)
-        timestamp = td.total_seconds()
+        # naive datetimes are treated as UTC, matching dt_now()/dt_from_db()
+        dt = arg_dt.replace(tzinfo=datetime.timezone.utc)
     else:
         dt = arg_dt.astimezone(tz=datetime.timezone.utc)
-        timestamp = dt.timestamp()
+    timestamp = dt.timestamp()
     if not integer:
         return timestamp
     return math.ceil(timestamp)
@@ -96,7 +95,7 @@ def getenv(key, default=None, /, *, integer=False, string=True):
           or use the default string type.
     """
 
-    args = dict(key=key, default=default, integer=integer, string=string)
+    args = {'key': key, 'default': default, 'integer': integer, 'string': string}
     supported_types = dict(zip(args.keys(), (
         (str,), # key
         (
@@ -117,8 +116,8 @@ def getenv(key, default=None, /, *, integer=False, string=True):
 
     r = os.getenv(key, d)
     if r is None:
-        if string: r = str()
-        if integer: r = int()
+        if string: r = ''
+        if integer: r = 0
     elif integer:
         r = int(float(r))
     return r
@@ -137,7 +136,7 @@ def response(status, arg_dict, /, *, cls=None, default=None):
             'headers': {'Content-Type': 'application/json'},
             'body': json.dumps(arg_dict, cls=cls, default=default),
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - must catch any serialization failure to still return a response
         #log.exception(e)
         msg = 'An exception occurred while generating the response.'
         return response(500, {'msg': msg, 'exc': str(e)})
@@ -201,11 +200,11 @@ def urlsafe_b64encode(s):
 
 GoogleEnvironment = collections.namedtuple(
     'GoogleEnvironment',
-    list((
+    [
         'client_id',
         'client_secret',
         'redirect_uri',
-    )),
+    ],
     defaults=(
         getenv('GOOGLE_CLIENT_ID'),
         getenv('GOOGLE_CLIENT_SECRET'),

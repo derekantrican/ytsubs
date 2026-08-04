@@ -1,9 +1,11 @@
+import html
 import json
+import secrets
 import urllib.parse
 import urllib.request
+
 import boto3
-import html
-import secrets
+
 from utils import EnvGoogle, getLog, token_encrypt, token_hash
 
 dynamodb = boto3.resource('dynamodb')
@@ -60,9 +62,22 @@ def lambda_handler(event, context):
             "body": '''
             <html>
             <head>
+                <link rel="stylesheet" href="https://static.ytsubs.app/common.css" blocking="render" />
                 <link rel="stylesheet" href="https://static.ytsubs.app/callback_expired.css" blocking="render" />
             </head>
             <body>
+                <nav>
+                    <div class="nav-left">
+                        <img class="logo" src="https://static.ytsubs.app/logo.png" alt="YTSubs Logo"/>
+                        <strong>YTSubs</strong>
+                    </div>
+                    <div class="nav-links">
+                        <a href="/">Home</a>
+                        <a href="https://static.ytsubs.app/docs.html">Docs</a>
+                        <a href="https://static.ytsubs.app/privacypolicy.html">Privacy Policy</a>
+                        <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
+                    </div>
+                </nav>
                 <h1>OAuth Link Expired</h1>
                 <p>Your authorization link has expired or is invalid.</p>
                 <p>Please <a href="https://ytsubs.app">go back to the homepage</a> and try again.</p>
@@ -86,10 +101,10 @@ def lambda_handler(event, context):
         req = urllib.request.Request("https://www.googleapis.com/oauth2/v2/userinfo", headers=headers)
         with urllib.request.urlopen(req) as resp:
             profile = json.loads(resp.read().decode())
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level handler must convert any failure into an HTTP response
         return {
             "statusCode": 500,
-            "body": f"Error fetching user profile: {str(e)}"
+            "body": f"Error fetching user profile: {e!s}"
         }
 
     email = profile.get("email")
@@ -112,8 +127,8 @@ def lambda_handler(event, context):
         })
         item = response.get('Item', {})
         api_key = item.get('api_key') or None
-    except:
-        pass
+    except Exception as e:  # noqa: BLE001 - fall through to the keys-table scan on any lookup failure
+        log.debug('mapping table lookup failed: %s', e)
 
     if api_key is None:
         log.warning('scanning the keys table')
@@ -124,8 +139,8 @@ def lambda_handler(event, context):
             )
             first_item = response.get("Items", [{}])[0]
             api_key = first_item.get('api_key') or None
-        except:
-            pass
+        except Exception as e:  # noqa: BLE001 - fall through to generating a new key on any lookup failure
+            log.debug('keys table scan failed: %s', e)
 
     # Generate a new token
     if api_key is None:
@@ -140,10 +155,10 @@ def lambda_handler(event, context):
             "youtube_access_token": token_encrypt(access_token),
             "youtube_refresh_token": token_encrypt(refresh_token),
         })
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level handler must convert any failure into an HTTP response
         return {
             "statusCode": 500,
-            "body": f"Failed to store user in DynamoDB: {str(e)}"
+            "body": f"Failed to store user in DynamoDB: {e!s}"
         }
     else:
         # Attempt to optimize future lookups
@@ -152,8 +167,8 @@ def lambda_handler(event, context):
                 "google_user_id_token": google_user_id_token,
                 "api_key": api_key,
             })
-        except:
-            pass
+        except Exception as e:  # noqa: BLE001 - this is a best-effort cache write, not required for correctness
+            log.debug('mapping table write failed: %s', e)
 
     # Return dark-themed HTML with API key and curl command
     document_str = f'''\
@@ -161,12 +176,25 @@ def lambda_handler(event, context):
     <html lang="en">
     <head>
         <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon" />
+        <link rel="stylesheet" href="https://static.ytsubs.app/common.css" blocking="render" />
         <link rel="stylesheet" href="https://static.ytsubs.app/callback.css" blocking="render" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
-        <title>Your YTSubs: Subscription Exporter API Key</title>
+        <title>YTSubs: Subscription Exporter API Key</title>
     </head>
     <body>
+        <nav>
+            <div class="nav-left">
+                <img class="logo" src="https://static.ytsubs.app/logo.png" alt="YTSubs Logo"/>
+                <strong>YTSubs</strong>
+            </div>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="https://static.ytsubs.app/docs.html">Docs</a>
+                <a href="https://static.ytsubs.app/privacypolicy.html">Privacy Policy</a>
+                <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
+            </div>
+        </nav>
         <h1>Welcome, {html.escape(email)}</h1>
         <p>Your API key is:</p>
         <code>{html.escape(api_key)}</code>

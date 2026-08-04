@@ -1,6 +1,8 @@
 import html
 import urllib.parse
+
 from utils import EnvGoogle
+
 
 def lambda_handler(event, context):
     api_auth_base_url = 'https://www.googleapis.com/auth'
@@ -13,14 +15,14 @@ def lambda_handler(event, context):
         f'{api_auth_base_url}/youtube.readonly',
     ))
 
-    qsl = list((
-        ('access_type', 'offline',),
-        ('client_id', EnvGoogle.client_id,),
-        ('prompt', 'consent',),
-        ('redirect_uri', EnvGoogle.redirect_uri,),
-        ('response_type', 'code',),
-        ('scope', scope,),
-    ))
+    qsl = [
+        ('access_type', 'offline'),
+        ('client_id', EnvGoogle.client_id),
+        ('prompt', 'consent'),
+        ('redirect_uri', EnvGoogle.redirect_uri),
+        ('response_type', 'code'),
+        ('scope', scope),
+    ]
     encoded_qsl = urllib.parse.urlencode(qsl)
 
     auth_url = f'{oauth_base_url}?{encoded_qsl}'
@@ -64,12 +66,25 @@ def lambda_handler(event, context):
     <html lang="en">
     <head>
         <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon" />
+        <link rel="stylesheet" href="https://static.ytsubs.app/common.css" blocking="render" />
         <link rel="stylesheet" href="https://static.ytsubs.app/start.css" blocking="render" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
-        <title>Welcome to YTSubs: Subscription Exporter</title>
+        <title>YTSubs: Subscription Exporter</title>
     </head>
     <body>
+        <nav>
+          <div class="nav-left">
+            <img class="logo" src="https://static.ytsubs.app/logo.png" alt="YTSubs Logo"/>
+            <strong>YTSubs</strong>
+          </div>
+          <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="https://static.ytsubs.app/docs.html">Docs</a>
+            <a href="https://static.ytsubs.app/privacypolicy.html">Privacy Policy</a>
+            <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
+          </div>
+        </nav>
         <img class="logo" src="https://static.ytsubs.app/logo.png"/>
         <h1>Welcome to YTSubs: Subscription Exporter</h1>
         <p>A simple service to fetch and cache your YouTube subscriptions using the YouTube Data API.</p>
