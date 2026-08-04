@@ -1,14 +1,26 @@
-import boto3
 import json
 import urllib.parse
 import urllib.request
+
+import boto3
+
 from utils import (
-    EnvGoogle, JSONEncoder,
-    data_compress, data_decompress,
-    dt_from_db, dt_now, dt_to_db, dt_to_json, dt_to_ts,
-    expire_after, newer_than,
-    token_decrypt, token_encrypt, token_hash,
-    urlsafe_b64_alphabet, getLog,
+    EnvGoogle,
+    JSONEncoder,
+    data_compress,
+    data_decompress,
+    dt_from_db,
+    dt_now,
+    dt_to_db,
+    dt_to_json,
+    dt_to_ts,
+    expire_after,
+    getLog,
+    newer_than,
+    token_decrypt,
+    token_encrypt,
+    token_hash,
+    urlsafe_b64_alphabet,
 )
 
 log = getLog(__name__)
@@ -94,12 +106,12 @@ def lambda_handler(event, context):
                 client.update_time_to_live(
                     TableName=table_name,
                     TimeToLiveSpecification={
-                        'Enabled': True if 'E' == v else False,
+                        'Enabled': 'E' == v,
                         'AttributeName': attr_name,
                     },
                 )
             )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - admin diagnostics endpoint must convert any failure into a response
         return response(500, dict(msg='An exception occurred.', exc=str(e)))
 
     # Check if data is cached
@@ -118,10 +130,8 @@ def lambda_handler(event, context):
                     now_dt=now_dt,
                     user=user,
                 )
-            except Exception as e:
-                log.exception(e)
-                # get new pages from YouTube later
-                pass
+            except Exception:
+                log.exception('Failed to read cached subscription pages, will refetch')
             else:
                 # send the cached data
                 return response(
@@ -150,12 +160,12 @@ def lambda_handler(event, context):
             log.debug("returned {all_subs.get('statusCode', '???')}")
             return all_subs
     except Exception as e:
-        log.exception(e)
+        log.exception('Error fetching from YouTube')
         body = dict(msg='Error fetching from YouTube.')
         try:
             json.dumps(body | dict(exc=str(e)))
-        except Exception as ee:
-            log.exception(ee)
+        except Exception:
+            log.exception('Failed to include exception details in the error response')
         else:
             body.update(dict(exc=str(e)), **body)
         return response(500, body)
@@ -177,7 +187,7 @@ def response(status, arg_dict, /):
             'body': json.dumps(arg_dict, cls=JSONEncoder),
         }
     except Exception as e:
-        log.exception(e)
+        log.exception('An exception occurred while generating the response')
         msg = 'An exception occurred while generating the response.'
         return response(500, {'msg': msg, 'exc': str(e)})
 
@@ -200,9 +210,8 @@ def refresh_access_token(refresh_token, *, user):
                 user['youtube_access_token'] = token_encrypt(new_token)
                 keys_table.put_item(Item=user)
                 return new_token
-    except Exception as e:
-        log.exception(e)
-        log.error("Failed to refresh token")
+    except Exception:
+        log.exception('Failed to refresh token')
     return None
 
 
@@ -305,7 +314,7 @@ def fetch_subs(token, *, user, api_key, cache=None, max_pages=None, now_dt=None,
                         "ensuring you grant YouTube access."
                     )
                     return response(403, dict(error=msg))
-                raise e
+                raise
         subs_count = len(all_subs)
         if per_page is not None and per_page == 11:
             return response(
