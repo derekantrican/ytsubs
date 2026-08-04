@@ -88,12 +88,25 @@ def lambda_handler(event, context):
     <html lang="en">
     <head>
         <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon" />
+        <link rel="stylesheet" href="https://static.ytsubs.app/common.css" blocking="render" />
         <link rel="stylesheet" href="https://static.ytsubs.app/start.css" blocking="render" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
-        <title>Welcome to YTSubs: Subscription Exporter</title>
+        <title>YTSubs: Subscription Exporter</title>
     </head>
     <body>
+        <nav>
+          <div class="nav-left">
+            <img class="logo" src="https://static.ytsubs.app/logo.png" alt="YTSubs Logo"/>
+            <strong>YTSubs</strong>
+          </div>
+          <div class="nav-links">
+            <a href="https://ytsubs.app/">Home</a>
+            <a href="https://static.ytsubs.app/docs.html">Docs</a>
+            <a href="https://static.ytsubs.app/privacypolicy.html">Privacy Policy</a>
+            <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
+          </div>
+        </nav>
         <img class="logo" src="https://static.ytsubs.app/logo.png"/>
         <h1>{heading}</h1>
         <p>{intro}</p>

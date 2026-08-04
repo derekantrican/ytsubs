@@ -8,10 +8,9 @@ import boto3
 
 from utils import EnvGoogle, getLog, token_encrypt, token_hash
 
-log = getLog(__name__)
-
 dynamodb = boto3.resource('dynamodb')
 keys_table = dynamodb.Table('ytsubs_api_keys')
+log = getLog(__name__)
 mapping_table = dynamodb.Table('ytsubs_user_to_api')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
 
@@ -65,9 +64,22 @@ def lambda_handler(event, context):
             "body": '''
             <html>
             <head>
+                <link rel="stylesheet" href="https://static.ytsubs.app/common.css" blocking="render" />
                 <link rel="stylesheet" href="https://static.ytsubs.app/callback_expired.css" blocking="render" />
             </head>
             <body>
+                <nav>
+                    <div class="nav-left">
+                        <img class="logo" src="https://static.ytsubs.app/logo.png" alt="YTSubs Logo"/>
+                        <strong>YTSubs</strong>
+                    </div>
+                    <div class="nav-links">
+                        <a href="https://ytsubs.app/">Home</a>
+                        <a href="https://static.ytsubs.app/docs.html">Docs</a>
+                        <a href="https://static.ytsubs.app/privacypolicy.html">Privacy Policy</a>
+                        <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
+                    </div>
+                </nav>
                 <h1>OAuth Link Expired</h1>
                 <p>Your authorization link has expired or is invalid.</p>
                 <p>Please <a href="https://ytsubs.app">go back to the homepage</a> and try again.</p>
@@ -124,6 +136,7 @@ def lambda_handler(event, context):
         log.debug('mapping table lookup failed: %s', e)
 
     if api_key is None:
+        log.warning('scanning the keys table')
         try:
             response = keys_table.scan(
                 FilterExpression="google_user_id_token = :u",
@@ -136,6 +149,7 @@ def lambda_handler(event, context):
 
     # Generate a new token
     if api_key is None:
+        log.info('generating a new API key')
         api_key = secrets.token_urlsafe(30)  # 40-ish character random string
 
     # Create or update user record
@@ -167,12 +181,25 @@ def lambda_handler(event, context):
     <html lang="en">
     <head>
         <link rel="icon" href="https://static.ytsubs.app/favicon.ico" type="image/x-icon" />
+        <link rel="stylesheet" href="https://static.ytsubs.app/common.css" blocking="render" />
         <link rel="stylesheet" href="https://static.ytsubs.app/callback.css" blocking="render" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta charset="UTF-8">
-        <title>Your YTSubs: Subscription Exporter API Key</title>
+        <title>YTSubs: Subscription Exporter API Key</title>
     </head>
     <body>
+        <nav>
+            <div class="nav-left">
+                <img class="logo" src="https://static.ytsubs.app/logo.png" alt="YTSubs Logo"/>
+                <strong>YTSubs</strong>
+            </div>
+            <div class="nav-links">
+                <a href="https://ytsubs.app/">Home</a>
+                <a href="https://static.ytsubs.app/docs.html">Docs</a>
+                <a href="https://static.ytsubs.app/privacypolicy.html">Privacy Policy</a>
+                <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
+            </div>
+        </nav>
         <h1>Welcome, {html.escape(email)}</h1>
         <p>Your API key is:</p>
         <code>{html.escape(api_key)}</code>

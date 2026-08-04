@@ -111,7 +111,7 @@ def lambda_handler(event, context):
                     },
                 )
             )
-    except Exception as e:  # noqa: BLE001 - admin diagnostics endpoint must convert any failure into a response
+    except Exception as e:  # ruff: ignore[BLE001]
         return response(500, dict(msg='An exception occurred.', exc=str(e)))
 
     # Check if data is cached
@@ -160,12 +160,13 @@ def lambda_handler(event, context):
             log.debug("returned {all_subs.get('statusCode', '???')}")
             return all_subs
     except Exception as e:
-        log.exception('Error fetching from YouTube')
-        body = dict(msg='Error fetching from YouTube.')
+        msg = 'Error fetching from YouTube'
+        log.exception(msg)
+        body = dict(msg=msg + '.')
         try:
             json.dumps(body | dict(exc=str(e)))
         except Exception:
-            log.exception('Failed to include exception details in the error response')
+            log.exception('Failed to encode exception details')
         else:
             body.update(dict(exc=str(e)), **body)
         return response(500, body)
@@ -187,9 +188,9 @@ def response(status, arg_dict, /):
             'body': json.dumps(arg_dict, cls=JSONEncoder),
         }
     except Exception as e:
-        log.exception('An exception occurred while generating the response')
-        msg = 'An exception occurred while generating the response.'
-        return response(500, {'msg': msg, 'exc': str(e)})
+        msg = 'An exception occurred while generating the response'
+        log.exception(msg)
+        return response(500, {'msg': msg + '.', 'exc': str(e)})
 
 
 def refresh_access_token(refresh_token, *, user):

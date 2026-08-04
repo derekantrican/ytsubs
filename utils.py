@@ -60,15 +60,14 @@ def dt_to_json(arg_dt, /):
 
 def dt_to_ts(arg_dt, /, *, integer=True):
     dt = arg_dt
-    timestamp = int()
     if arg_dt.utcoffset() is None:
+        # Intentionally force the naive path to have correct calculations
         # naive datetimes are presumed to represent the system's local time;
         # astimezone(tz=None) attaches the local offset without shifting the wall clock
         dt = arg_dt.astimezone(tz=None)
-        timestamp = dt.timestamp()
     else:
         dt = arg_dt.astimezone(tz=datetime.timezone.utc)
-        timestamp = dt.timestamp()
+    timestamp = dt.timestamp()
     if not integer:
         return timestamp
     return math.ceil(timestamp)
@@ -99,7 +98,7 @@ def getenv(key, default=None, /, *, integer=False, string=True):
           or use the default string type.
     """
 
-    args = dict(key=key, default=default, integer=integer, string=string)
+    args = {'key': key, 'default': default, 'integer': integer, 'string': string}
     supported_types = dict(zip(args.keys(), (
         (str,), # key
         (
@@ -120,8 +119,8 @@ def getenv(key, default=None, /, *, integer=False, string=True):
 
     r = os.getenv(key, d)
     if r is None:
-        if string: r = str()
-        if integer: r = int()
+        if string: r = ''
+        if integer: r = 0
     elif integer:
         r = int(float(r))
     return r
@@ -253,8 +252,8 @@ def duration_iso_string(duration):
         sign = ""
 
     days, hours, minutes, seconds, microseconds = _get_duration_components(duration)
-    ms = f".{microseconds:06d}" if microseconds else ""
-    return f"{sign}P{days}DT{hours:02d}H{minutes:02d}M{seconds:02d}{ms}S"
+    ms = f'.{microseconds:06d}' if microseconds else ''
+    return f'{sign}P{days}DT{hours:02d}H{minutes:02d}M{seconds:02d}{ms}S'
 
 
 def is_aware(value):
@@ -300,11 +299,11 @@ def json_serial(obj):
 
 GoogleEnvironment = collections.namedtuple(
     'GoogleEnvironment',
-    list((
+    [
         'client_id',
         'client_secret',
         'redirect_uri',
-    )),
+    ],
     defaults=(
         getenv('GOOGLE_CLIENT_ID'),
         getenv('GOOGLE_CLIENT_SECRET'),
