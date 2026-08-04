@@ -60,8 +60,8 @@ def dt_to_json(arg_dt, /):
 def dt_to_ts(arg_dt, /, *, integer=True):
     dt = arg_dt
     if arg_dt.utcoffset() is None:
-        # naive datetimes are treated as UTC, matching dt_now()/dt_from_db()
-        dt = arg_dt.replace(tzinfo=datetime.timezone.utc)
+        # Intentionally force the naive path to have correct calculations
+        dt = arg_dt.astimezone(tz=None)
     else:
         dt = arg_dt.astimezone(tz=datetime.timezone.utc)
     timestamp = dt.timestamp()
