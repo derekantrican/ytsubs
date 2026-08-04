@@ -130,8 +130,8 @@ def lambda_handler(event, context):
                     now_dt=now_dt,
                     user=user,
                 )
-            except Exception as e:  # ruff: ignore[BLE001]
-                log.warning(f'Failed to read cached subscription pages, will refetch: {e!s}')
+            except Exception:
+                log.exception('Failed to read cached subscription pages, will refetch')
             else:
                 # send the cached data
                 return response(
@@ -160,13 +160,13 @@ def lambda_handler(event, context):
             log.debug("returned {all_subs.get('statusCode', '???')}")
             return all_subs
     except Exception as e:
-        msg = 'Error fetching from YouTube.'
+        msg = 'Error fetching from YouTube'
         log.exception(msg)
-        body = dict(msg=msg)
+        body = dict(msg=msg + '.')
         try:
             json.dumps(body | dict(exc=str(e)))
         except Exception:
-            log.exception('Failed to encode exception.')
+            log.exception('Failed to encode exception details')
         else:
             body.update(dict(exc=str(e)), **body)
         return response(500, body)
@@ -188,9 +188,9 @@ def response(status, arg_dict, /):
             'body': json.dumps(arg_dict, cls=JSONEncoder),
         }
     except Exception as e:
-        msg = 'An exception occurred while generating the response.'
+        msg = 'An exception occurred while generating the response'
         log.exception(msg)
-        return response(500, {'msg': msg, 'exc': str(e)})
+        return response(500, {'msg': msg + '.', 'exc': str(e)})
 
 
 def refresh_access_token(refresh_token, *, user):
@@ -211,8 +211,8 @@ def refresh_access_token(refresh_token, *, user):
                 user['youtube_access_token'] = token_encrypt(new_token)
                 keys_table.put_item(Item=user)
                 return new_token
-    except Exception as e:  # noqa: BLE001 - any failure here just means "couldn't refresh"; caller falls back to None
-        log.error(f"Failed to refresh token: {e}")
+    except Exception:
+        log.exception('Failed to refresh token')
     return None
 
 

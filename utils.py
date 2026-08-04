@@ -62,6 +62,8 @@ def dt_to_ts(arg_dt, /, *, integer=True):
     dt = arg_dt
     if arg_dt.utcoffset() is None:
         # Intentionally force the naive path to have correct calculations
+        # naive datetimes are presumed to represent the system's local time;
+        # astimezone(tz=None) attaches the local offset without shifting the wall clock
         dt = arg_dt.astimezone(tz=None)
     else:
         dt = arg_dt.astimezone(tz=datetime.timezone.utc)
@@ -251,10 +253,7 @@ def duration_iso_string(duration):
 
     days, hours, minutes, seconds, microseconds = _get_duration_components(duration)
     ms = f'.{microseconds:06d}' if microseconds else ''
-    # ruff: ignore[UP032]
-    return "{}P{}DT{:02d}H{:02d}M{:02d}{}S".format(
-        sign, days, hours, minutes, seconds, ms
-    )
+    return f'{sign}P{days}DT{hours:02d}H{minutes:02d}M{seconds:02d}{ms}S'
 
 
 def is_aware(value):
