@@ -159,7 +159,7 @@ def lambda_handler(event, context):
         if isinstance(all_subs, dict) and "statusCode" in all_subs:
             log.debug("returned {all_subs.get('statusCode', '???')}")
             return all_subs
-    except Exception as e:  # ruff: ignore[BLE001]
+    except Exception as e:
         msg = 'Error fetching from YouTube.'
         log.exception(msg)
         body = dict(msg=msg)
