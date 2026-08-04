@@ -130,8 +130,8 @@ def lambda_handler(event, context):
                     now_dt=now_dt,
                     user=user,
                 )
-            except Exception as e:  # noqa: BLE001 - fall through to a fresh fetch on any cache-read failure
-                print(f"Failed to read cached subscription pages, will refetch: {e!s}")
+            except Exception as e:  # ruff: ignore[BLE001]
+                log.warning(f'Failed to read cached subscription pages, will refetch: {e!s}')
             else:
                 # send the cached data
                 return response(
