@@ -79,7 +79,7 @@ def lambda_handler(event, context):
             <strong>YTSubs</strong>
           </div>
           <div class="nav-links">
-            <a href="/">Home</a>
+            <a href="https://ytsubs.app/">Home</a>
             <a href="https://static.ytsubs.app/docs.html">Docs</a>
             <a href="https://static.ytsubs.app/privacypolicy.html">Privacy Policy</a>
             <a href="https://github.com/derekantrican/ytsubs" target="_blank">GitHub</a>
