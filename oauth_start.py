@@ -1,8 +1,13 @@
 import html
 import urllib.parse
+
 from utils import EnvGoogle
 
+
 def lambda_handler(event, context):
+    query_params = event.get('queryStringParameters') or {}
+    purge = '1' == query_params.get('purge')
+
     api_auth_base_url = 'https://www.googleapis.com/auth'
     oauth_base_url = 'https://accounts.google.com/o/oauth2/v2/auth'
 
@@ -13,17 +18,30 @@ def lambda_handler(event, context):
         f'{api_auth_base_url}/youtube.readonly',
     ))
 
-    qsl = list((
-        ('access_type', 'offline',),
-        ('client_id', EnvGoogle.client_id,),
-        ('prompt', 'consent',),
-        ('redirect_uri', EnvGoogle.redirect_uri,),
-        ('response_type', 'code',),
-        ('scope', scope,),
-    ))
+    qsl = [
+        ('access_type', 'offline'),
+        ('client_id', EnvGoogle.client_id),
+        ('prompt', 'consent'),
+        ('redirect_uri', EnvGoogle.redirect_uri),
+        ('response_type', 'code'),
+        ('scope', scope),
+    ]
+    if purge:
+        # round-tripped through Google's OAuth flow so /auth/callback can require
+        # a freshly-proven Google login before deleting anything
+        qsl.append(('state', 'purge'))
     encoded_qsl = urllib.parse.urlencode(qsl)
 
     auth_url = f'{oauth_base_url}?{encoded_qsl}'
+
+    if purge:
+        heading = 'Delete your YTSubs data'
+        intro = 'Sign in with Google again to confirm and permanently delete your API key(s) and cached YouTube subscriptions from YTSubs.'
+        button_label = 'Confirm with Google &amp; Delete My Data'
+    else:
+        heading = 'Welcome to YTSubs: Subscription Exporter'
+        intro = 'A simple service to fetch and cache your YouTube subscriptions using the YouTube Data API.'
+        button_label = 'Sign in with Google'
 
     example_response = '''\
 {
@@ -56,6 +74,15 @@ def lambda_handler(event, context):
 }
 '''
 
+    example_section = f'''
+        <h2>Example response:</h2>
+        <p>The API response with list of the user's subscriptions as they are returned by the <a style="color: cornflowerblue" href="https://developers.google.com/youtube/v3/docs/subscriptions#resource-representation" target="_blank">YouTube API</a> with an additional 'lastRetrievalDate' parameter indicating how old the data is (updated upon a call to the API every 12 hours)</p>
+        <code>{html.escape(example_response)}</code>
+        <a style="margin-top: 2.5em" href='https://ko-fi.com/E1E5RZJY' target='_blank'><img height='36' style='border:0px;height:48px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+        '''
+    if purge:
+        example_section = ''
+
     document_str = f'''\
     <!DOCTYPE html>
     <html lang="en">
@@ -68,13 +95,10 @@ def lambda_handler(event, context):
     </head>
     <body>
         <img class="logo" src="https://static.ytsubs.app/logo.png"/>
-        <h1>Welcome to YTSubs: Subscription Exporter</h1>
-        <p>A simple service to fetch and cache your YouTube subscriptions using the YouTube Data API.</p>
-        <a href="{html.escape(auth_url)}" class="button">Sign in with Google</a>
-        <h2>Example response:</h2>
-        <p>The API response with list of the user's subscriptions as they are returned by the <a style="color: cornflowerblue" href="https://developers.google.com/youtube/v3/docs/subscriptions#resource-representation" target="_blank">YouTube API</a> with an additional 'lastRetrievalDate' parameter indicating how old the data is (updated upon a call to the API every 12 hours)</p>
-        <code>{html.escape(example_response)}</code>
-        <a style="margin-top: 2.5em" href='https://ko-fi.com/E1E5RZJY' target='_blank'><img height='36' style='border:0px;height:48px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+        <h1>{heading}</h1>
+        <p>{intro}</p>
+        <a href="{html.escape(auth_url)}" class="button">{button_label}</a>
+        {example_section}
         <footer style="margin-top: 2em;">
           <a href="https://static.ytsubs.app/privacypolicy.html" style="color: cornflowerblue;">Privacy Policy</a>
         </footer>

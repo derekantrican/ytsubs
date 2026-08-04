@@ -1,5 +1,4 @@
 import base64
-import boto3
 import collections
 import datetime
 import gzip
@@ -9,6 +8,8 @@ import logging
 import math
 import os
 import textwrap
+
+import boto3
 
 _encrypted_token_prefix = '{encrypted}:'
 urlsafe_b64_alphabet = frozenset(
@@ -61,8 +62,10 @@ def dt_to_ts(arg_dt, /, *, integer=True):
     dt = arg_dt
     timestamp = int()
     if arg_dt.utcoffset() is None:
-        td = arg_dt - datetime.datetime.fromtimestamp(0, tz=None)
-        timestamp = td.total_seconds()
+        # naive datetimes are presumed to represent the system's local time;
+        # astimezone(tz=None) attaches the local offset without shifting the wall clock
+        dt = arg_dt.astimezone(tz=None)
+        timestamp = dt.timestamp()
     else:
         dt = arg_dt.astimezone(tz=datetime.timezone.utc)
         timestamp = dt.timestamp()
@@ -137,7 +140,7 @@ def response(status, arg_dict, /, *, cls=None, default=None):
             'headers': {'Content-Type': 'application/json'},
             'body': json.dumps(arg_dict, cls=cls, default=default),
         }
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - must catch any serialization failure to still return a response
         #log.exception(e)
         msg = 'An exception occurred while generating the response.'
         return response(500, {'msg': msg, 'exc': str(e)})
@@ -250,10 +253,8 @@ def duration_iso_string(duration):
         sign = ""
 
     days, hours, minutes, seconds, microseconds = _get_duration_components(duration)
-    ms = ".{:06d}".format(microseconds) if microseconds else ""
-    return "{}P{}DT{:02d}H{:02d}M{:02d}{}S".format(
-        sign, days, hours, minutes, seconds, ms
-    )
+    ms = f".{microseconds:06d}" if microseconds else ""
+    return f"{sign}P{days}DT{hours:02d}H{minutes:02d}M{seconds:02d}{ms}S"
 
 
 def is_aware(value):
