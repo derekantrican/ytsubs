@@ -6,7 +6,7 @@ import boto3
 
 from utils import (
     EnvGoogle,
-    JSONEncoder‎,
+    JSONEncoder,
     data_compress,
     data_decompress,
     dt_from_db,
