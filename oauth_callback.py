@@ -203,7 +203,7 @@ def purge_cached_subscriptions(api_key):
     pages_item = subs_table.get_item(Key={'api_key': f'{api_key},pages'}).get('Item') or {}
     page_count = pages_item.get('data') or 0
     with subs_table.batch_writer() as batch:
-        for page in range(1, page_count + 1):
+        for page in range(1, 1 + page_count):
             batch.delete_item(Key={'api_key': f'{api_key},page{page}'})
         batch.delete_item(Key={'api_key': f'{api_key},pages'})
 

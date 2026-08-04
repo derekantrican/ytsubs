@@ -74,14 +74,14 @@ def lambda_handler(event, context):
 }
 '''
 
-    example_section = ''
-    if not purge:
-        example_section = f'''
+    example_section = f'''
         <h2>Example response:</h2>
         <p>The API response with list of the user's subscriptions as they are returned by the <a style="color: cornflowerblue" href="https://developers.google.com/youtube/v3/docs/subscriptions#resource-representation" target="_blank">YouTube API</a> with an additional 'lastRetrievalDate' parameter indicating how old the data is (updated upon a call to the API every 12 hours)</p>
         <code>{html.escape(example_response)}</code>
         <a style="margin-top: 2.5em" href='https://ko-fi.com/E1E5RZJY' target='_blank'><img height='36' style='border:0px;height:48px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
         '''
+    if purge:
+        example_section = ''
 
     document_str = f'''\
     <!DOCTYPE html>

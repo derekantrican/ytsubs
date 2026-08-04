@@ -62,8 +62,9 @@ def dt_to_ts(arg_dt, /, *, integer=True):
     dt = arg_dt
     timestamp = int()
     if arg_dt.utcoffset() is None:
-        # naive datetimes are treated as UTC, matching dt_now()/dt_from_db()
-        dt = arg_dt.replace(tzinfo=datetime.timezone.utc)
+        # naive datetimes are presumed to represent the system's local time;
+        # astimezone(tz=None) attaches the local offset without shifting the wall clock
+        dt = arg_dt.astimezone(tz=None)
         timestamp = dt.timestamp()
     else:
         dt = arg_dt.astimezone(tz=datetime.timezone.utc)
