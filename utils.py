@@ -7,7 +7,6 @@ import json
 import logging
 import math
 import os
-import textwrap
 
 import boto3
 
@@ -189,10 +188,6 @@ def token_hash(arg_str, /):
     if isinstance(arg_str, str):
         arg_bytes = arg_str.encode()
     return hashlib.sha256(arg_bytes).hexdigest()
-
-
-def truncate(s, /, limit, *, placeholder=' …'):    
-    return textwrap.shorten(s, width=limit, placeholder=placeholder)
 
 
 def urlsafe_b64decode(s, validate=True):
