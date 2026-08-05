@@ -37,19 +37,23 @@ jobs:
 
       - name: Determine Lambda function name
         id: set_lambda_name
+        shell: bash
         run: |
-          SUFFIX=""
-          if [ "${{ github.ref }}" = "refs/heads/dev" ]; then
-            SUFFIX="_dev"
-          fi
+          case '${{ github.ref }}' in
+            (refs/heads/main) SUFFIX='' ;;
+            (refs/heads/*) SUFFIX='_${{ github.ref_name }}' ;;
+            (*) exit 1 ;;
+          esac
 
-          if [ "${{ matrix.function }}" = "fetch_subscriptions" ]; then
-            echo "lambda_name=ytsubs_fetch_subscriptions${SUFFIX}" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.function }}" = "oauth_start" ]; then
-            echo "lambda_name=ytsubs_oauth_start${SUFFIX}" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.function }}" = "oauth_callback" ]; then
-            echo "lambda_name=ytsubs_oauth_callback${SUFFIX}" >> $GITHUB_OUTPUT
-          fi
+          set_lambda_name() {
+            case "${1}" in
+              (fetch_subscriptions|oauth_callback|oauth_start) : ;;
+              (*) exit 1 ;;
+            esac
+            printf -- 'lambda_name=%s%s\n' "ytsubs_${1}" "${SUFFIX}"
+          } >> "${GITHUB_OUTPUT}"
+
+          set_lambda_name '${{ matrix.function }}'
 
       - name: Deploy ${{ matrix.function }}
         run: |
