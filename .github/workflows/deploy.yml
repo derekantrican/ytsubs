@@ -38,10 +38,14 @@ jobs:
       - name: Determine Lambda function name
         id: set_lambda_name
         shell: bash
+        env:
+          FUNCTION: ${{ matrix.function }}
+          GH_REF: ${{ github.ref }}
+          GH_REF_NAME: ${{ github.ref_name }}
         run: |
-          case '${{ github.ref }}' in
+          case "${GH_REF}" in
             (refs/heads/main) SUFFIX='' ;;
-            (refs/heads/*) SUFFIX='_${{ github.ref_name }}' ;;
+            (refs/heads/*) SUFFIX="_${GH_REF_NAME}" ;;
             (*) exit 1 ;;
           esac
 
@@ -53,7 +57,7 @@ jobs:
             printf -- 'lambda_name=%s%s\n' "ytsubs_${1}" "${SUFFIX}"
           } >> "${GITHUB_OUTPUT}"
 
-          set_lambda_name '${{ matrix.function }}'
+          set_lambda_name "${FUNCTION}"
 
       - name: Deploy ${{ matrix.function }}
         run: |
