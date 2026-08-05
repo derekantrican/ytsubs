@@ -14,7 +14,7 @@ on:
 
 jobs:
   deploy-lambdas:
-    if: ${{ !cancelled() && 'pull_request' != github.event_name }}
+    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -53,6 +53,7 @@ jobs:
             --zip-file "fileb://${{ matrix.function }}.zip"
 
   upload-assets:
+    if: github.ref == 'refs/heads/main'
     needs: deploy-lambdas
     runs-on: ubuntu-latest
 
