@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.10
+ARG PYTHON_VERSION=3.12
 
 FROM public.ecr.aws/lambda/python:${PYTHON_VERSION} AS lambda-base
 
