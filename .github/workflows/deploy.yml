@@ -18,6 +18,9 @@ jobs:
   deploy-lambdas:
     if: ${{ !cancelled() && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     strategy:
       matrix:
         function:
@@ -67,7 +70,7 @@ jobs:
           GH_ACTOR: ${{ github.actor }}
           GH_REPO_OWNER: ${{ github.repository_owner }}
         run: |
-          echo "owner_lowercase=${GH_ACTOR,,}" >> "${GITHUB_OUTPUT}"
+          echo "owner_lowercase=${GH_REPO_OWNER,,}" >> "${GITHUB_OUTPUT}"
           
           # Construct the targeted directory space
           TARGET_DIR='docker/contexts/${{ matrix.function }}'
