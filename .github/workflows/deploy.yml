@@ -110,7 +110,7 @@ jobs:
           tags: ghcr.io/${{ steps.prep.outputs.owner_lowercase }}/ytsubs:${{ matrix.function }}
           target: ${{ matrix.function }}
           build-args: |
-            PYTHON_VERSION=3.11
+            PYTHON_VERSION=3.13
             LAMBDA_FUNCTION=${{ matrix.function }}.lambda_handler
             LAMBDA_FUNCTION_NAME=${{ steps.set_lambda_name.outputs.lambda_name }}
 
