@@ -11,6 +11,7 @@ on:
       - 'oauth_start.py'
       - 'oauth_callback.py'
       - 'utils.py'
+      - 'docker/**'
       - 'static/**'
       - '.github/workflows/deploy.yml'
 
