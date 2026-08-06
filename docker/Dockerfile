@@ -20,11 +20,17 @@ ENV _HANDLER="${LAMBDA_FUNCTION}"
 
 COPY --from=lambda_src *.py "${LAMBDA_TASK_ROOT}/"
 
+RUN cd "${LAMBDA_TASK_ROOT}" && \
+    zip "${LAMBDA_DIST}/deploy.zip" *
+
 FROM lambda-base AS oauth_callback
 ARG LAMBDA_FUNCTION
 ENV _HANDLER="${LAMBDA_FUNCTION}"
 
 COPY --from=lambda_src *.py "${LAMBDA_TASK_ROOT}/"
+
+RUN cd "${LAMBDA_TASK_ROOT}" && \
+    zip "${LAMBDA_DIST}/deploy.zip" *
 
 FROM lambda-base AS oauth_start
 ARG LAMBDA_FUNCTION
@@ -32,6 +38,5 @@ ENV _HANDLER="${LAMBDA_FUNCTION}"
 
 COPY --from=lambda_src *.py "${LAMBDA_TASK_ROOT}/"
 
-# zip ${LAMBDA_TASK_ROOT} files
 RUN cd "${LAMBDA_TASK_ROOT}" && \
     zip "${LAMBDA_DIST}/deploy.zip" *
