@@ -105,6 +105,7 @@ jobs:
             lambda_src=./${{ steps.prep.outputs.context_directory }}
           context: ./docker
           file: ./docker/Dockerfile
+          provenance: false
           push: true
           tags: ghcr.io/${{ steps.prep.outputs.owner_lowercase }}/ytsubs:${{ matrix.function }}
           target: ${{ matrix.function }}
