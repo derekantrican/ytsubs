@@ -32,13 +32,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
       - name: Determine Lambda function name
         id: set_lambda_name
         shell: bash
@@ -67,7 +60,6 @@ jobs:
         id: prep
         shell: bash
         env:
-          GH_ACTOR: ${{ github.actor }}
           GH_REPO_OWNER: ${{ github.repository_owner }}
         run: |
           echo "owner_lowercase=${GH_REPO_OWNER,,}" >> "${GITHUB_OUTPUT}"
@@ -90,6 +82,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up AWS credentials
+        if: github.ref_name != 'tcely-docker-deploy'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Deploy ${{ matrix.function }}
         if: github.ref_name != 'tcely-docker-deploy'
         run: |
@@ -101,13 +101,13 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v7
         with:
+          build-contexts: |
+            lambda_src=./${{ steps.prep.outputs.context_directory }}
           context: ./docker
           file: ./docker/Dockerfile
           push: true
           tags: ghcr.io/${{ steps.prep.outputs.owner_lowercase }}/ytsubs:${{ matrix.function }}
           target: ${{ matrix.function }}
-          build-contexts: |
-            lambda_src=./${{ steps.prep.outputs.context_directory }}
           build-args: |
             PYTHON_VERSION=3.11
             LAMBDA_FUNCTION=${{ matrix.function }}.lambda_handler
@@ -123,7 +123,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
