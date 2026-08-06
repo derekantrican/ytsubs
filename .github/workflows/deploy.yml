@@ -5,6 +5,7 @@ on:
     branches:
       - 'main'
       - 'dev'
+      - 'tcely-docker-deploy'
     paths:
       - 'fetch_subscriptions.py'
       - 'oauth_start.py'
