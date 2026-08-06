@@ -2,7 +2,10 @@ ARG PYTHON_VERSION=3.12
 
 FROM public.ecr.aws/lambda/python:${PYTHON_VERSION} AS lambda-base
 
-RUN yum --noplugins -y install zip ; yum --noplugins -y clean all
+RUN case "$(command -v yum)" in \
+        (*/yum) yum --noplugins -y install zip ; yum --noplugins -y clean all ;; \
+        (*) dnf --disableplugin=* --nodocs -y install zip ; dnf --disableplugin=* clean all ;; \
+    esac
 
 ARG LAMBDA_DIST=/srv
 ENV LAMBDA_DIST="${LAMBDA_DIST}"
