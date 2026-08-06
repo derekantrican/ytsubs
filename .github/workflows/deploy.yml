@@ -87,6 +87,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy ${{ matrix.function }}
+        if: github.ref_name != 'tcely-docker-deploy'
         run: |
           zip ${{ matrix.function }}.zip ${{ matrix.function }}.py utils.py
           aws lambda update-function-code \
