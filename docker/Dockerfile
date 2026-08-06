@@ -2,6 +2,9 @@ ARG PYTHON_VERSION=3.12
 
 FROM public.ecr.aws/lambda/python:${PYTHON_VERSION} AS lambda-base
 
+COPY lambda-entrypoint.py /lambda-entrypoint.py
+ENTRYPOINT ["/usr/bin/env", "python3", "--", "/lambda-entrypoint.py"]
+
 RUN case "$(command -v yum)" in \
         (*/yum) yum --noplugins -y install zip ; yum --noplugins -y clean all ;; \
         (*) dnf --disableplugin=* --nodocs -y install zip ; dnf --disableplugin=* clean all ;; \
