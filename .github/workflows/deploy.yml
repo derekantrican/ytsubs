@@ -5,11 +5,13 @@ on:
     branches:
       - 'main'
       - 'dev'
+      - 'tcely-docker-deploy'
     paths:
       - 'fetch_subscriptions.py'
       - 'oauth_start.py'
       - 'oauth_callback.py'
       - 'utils.py'
+      - 'docker/**'
       - 'static/**'
       - '.github/workflows/deploy.yml'
 
@@ -17,6 +19,9 @@ jobs:
   deploy-lambdas:
     if: ${{ !cancelled() && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     strategy:
       matrix:
         function:
@@ -27,13 +32,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-
-      - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Determine Lambda function name
         id: set_lambda_name
@@ -59,12 +57,62 @@ jobs:
 
           set_lambda_name "${FUNCTION}"
 
+      - name: Prepare context for ${{ matrix.function }}
+        id: prep
+        shell: bash
+        env:
+          GH_REPO_OWNER: ${{ github.repository_owner }}
+        run: |
+          echo "owner_lowercase=${GH_REPO_OWNER,,}" >> "${GITHUB_OUTPUT}"
+          
+          # Construct the targeted directory space
+          TARGET_DIR='docker/contexts/${{ matrix.function }}'
+          mkdir -v -p "${TARGET_DIR}"
+          echo "context_directory=${TARGET_DIR}" >> "${GITHUB_OUTPUT}"
+          
+          # Copy using the strict verbose, preserve, and target-directory flags
+          cp -v -p -t "${TARGET_DIR}/" "${{ matrix.function }}.py" 'utils.py'
+
+      - name: Set up Docker buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Deploy ${{ matrix.function }}
+        if: github.ref_name != 'tcely-docker-deploy'
         run: |
           zip ${{ matrix.function }}.zip ${{ matrix.function }}.py utils.py
           aws lambda update-function-code \
             --function-name "${{ steps.set_lambda_name.outputs.lambda_name }}" \
             --zip-file "fileb://${{ matrix.function }}.zip"
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v7
+        with:
+          build-contexts: |
+            lambda_src=./${{ steps.prep.outputs.context_directory }}
+          context: ./docker
+          file: ./docker/Dockerfile
+          provenance: false
+          push: true
+          tags: ghcr.io/${{ steps.prep.outputs.owner_lowercase }}/ytsubs:${{ matrix.function }}
+          target: ${{ matrix.function }}
+          build-args: |
+            PYTHON_VERSION=3.13
+            LAMBDA_FUNCTION=${{ matrix.function }}.lambda_handler
+            LAMBDA_FUNCTION_NAME=${{ steps.set_lambda_name.outputs.lambda_name }}
 
   upload-assets:
     if: github.ref == 'refs/heads/main'
