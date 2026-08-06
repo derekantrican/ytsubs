@@ -10,7 +10,7 @@ ENV LAMBDA_DIST="${LAMBDA_DIST}"
 COPY requirements.txt "${LAMBDA_DIST}/requirements.txt"
 
 # Install the specified packages
-RUN ! test -s "${LAMBDA_DIST}/requirements.txt" || pip install --no-cache-dir -r "${LAMBDA_DIST}/requirements.txt" --target "${LAMBDA_RUNTIME_DIR}/"
+RUN ! test -s "${LAMBDA_DIST}/requirements.txt" || pip install --no-cache-dir --require-hashes -r "${LAMBDA_DIST}/requirements.txt" --target "${LAMBDA_RUNTIME_DIR}/"
 
 # Targets
 
