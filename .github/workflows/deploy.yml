@@ -7,6 +7,8 @@ on:
       - 'dev'
     paths:
       - 'fetch_subscriptions.py'
+      - 'fetch_playlists.py'
+      - 'fetch_playlist.py'
       - 'oauth_start.py'
       - 'oauth_callback.py'
       - 'utils.py'
@@ -21,6 +23,8 @@ jobs:
       matrix:
         function:
           - fetch_subscriptions
+          - fetch_playlists
+          - fetch_playlist
           - oauth_start
           - oauth_callback
 
@@ -51,7 +55,7 @@ jobs:
 
           set_lambda_name() {
             case "${1}" in
-              (fetch_subscriptions|oauth_callback|oauth_start) : ;;
+              (fetch_subscriptions|fetch_playlists|fetch_playlist|oauth_callback|oauth_start) : ;;
               (*) exit 1 ;;
             esac
             printf -- 'lambda_name=%s%s\n' "ytsubs_${1}" "${SUFFIX}"

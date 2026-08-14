@@ -5,7 +5,6 @@ import urllib.request
 import boto3
 
 from utils import (
-    EnvGoogle,
     JSONEncoder,
     data_compress,
     data_decompress,
@@ -17,8 +16,8 @@ from utils import (
     expire_after,
     getLog,
     newer_than,
+    refresh_access_token,
     token_decrypt,
-    token_encrypt,
     token_hash,
     urlsafe_b64_alphabet,
 )
@@ -193,29 +192,6 @@ def response(status, arg_dict, /):
         return response(500, {'msg': msg + '.', 'exc': str(e)})
 
 
-def refresh_access_token(refresh_token, *, user):
-    token_url = "https://oauth2.googleapis.com/token"
-    data = urllib.parse.urlencode({
-        "client_id": EnvGoogle.client_id,
-        "client_secret": EnvGoogle.client_secret,
-        "refresh_token": refresh_token,
-        "grant_type": "refresh_token"
-    }).encode()
-
-    req = urllib.request.Request(token_url, data=data)
-    try:
-        with urllib.request.urlopen(req) as resp:
-            token_data = json.loads(resp.read().decode())
-            new_token = token_data.get("access_token")
-            if new_token:
-                user['youtube_access_token'] = token_encrypt(new_token)
-                keys_table.put_item(Item=user)
-                return new_token
-    except Exception:
-        log.exception('Failed to refresh token')
-    return None
-
-
 def fetch_subs(token, *, user, api_key, cache=None, max_pages=None, now_dt=None, per_page=None):
     if now_dt is None:
         now_dt = dt_now()
@@ -293,7 +269,7 @@ def fetch_subs(token, *, user, api_key, cache=None, max_pages=None, now_dt=None,
                         )
                         return response(500, dict(error=msg))
 
-                    new_token = refresh_access_token(refresh_token, user=user)
+                    new_token = refresh_access_token(refresh_token, user=user, keys_table=keys_table, log=log)
                     if new_token:
                         return fetch_subs(
                             new_token,

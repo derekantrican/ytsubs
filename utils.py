@@ -7,6 +7,8 @@ import json
 import logging
 import math
 import os
+import urllib.parse
+import urllib.request
 
 import boto3
 
@@ -129,6 +131,29 @@ def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
     if now_dt is None:
         now_dt = dt_now()
     return now_dt <= expire_after(arg_dt, *args, **kwargs)
+
+
+def refresh_access_token(refresh_token, *, user, keys_table, log):
+    token_url = "https://oauth2.googleapis.com/token"
+    data = urllib.parse.urlencode({
+        "client_id": EnvGoogle.client_id,
+        "client_secret": EnvGoogle.client_secret,
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token"
+    }).encode()
+
+    req = urllib.request.Request(token_url, data=data)
+    try:
+        with urllib.request.urlopen(req) as resp:
+            token_data = json.loads(resp.read().decode())
+            new_token = token_data.get("access_token")
+            if new_token:
+                user['youtube_access_token'] = token_encrypt(new_token)
+                keys_table.put_item(Item=user)
+                return new_token
+    except Exception:
+        log.exception('Failed to refresh token')
+    return None
 
 
 def response(status, arg_dict, /, *, cls=None, default=None):
