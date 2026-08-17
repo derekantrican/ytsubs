@@ -14,8 +14,9 @@ from utils import (
     dt_to_ts,
     expire_after,
     getLog,
+    handle_youtube_http_error,
     newer_than,
-    refresh_access_token,
+    response,
     token_decrypt,
     token_hash,
     urlsafe_b64_alphabet,
@@ -26,20 +27,6 @@ log = getLog(__name__)
 dynamodb = boto3.resource('dynamodb')
 subs_table = dynamodb.Table('ytsubs_subscriptions_cache')
 keys_table = dynamodb.Table('ytsubs_api_keys')
-
-NO_REFRESH_TOKEN_MSG = (
-    "The YouTube refresh token was not accessible. "
-    "Please visit https://ytsubs.app and sign in again."
-)
-ACCESS_REVOKED_MSG = (
-    "Access to YouTube was revoked. "
-    "Please visit https://ytsubs.app and sign in again."
-)
-ACCESS_DENIED_MSG = (
-    "Access to YouTube was denied. "
-    "Please visit https://ytsubs.app and sign in again, "
-    "ensuring you grant YouTube access."
-)
 
 
 def lambda_handler(event, context):
@@ -93,9 +80,11 @@ def lambda_handler(event, context):
         msg = 'No YouTube token available for this user'
         return response(401, dict(error=msg))
 
-    # Check if data is cached
+    # Check if data is cached. Keyed by the Google account token (not api_key)
+    # so the cache survives api_key changes.
     now_dt = dt_now()
-    cache = subs_table.get_item(Key={'api_key': f'{api_key},playlist,{playlist_id},pages'}).get('Item')
+    cache_key = f"{user['google_user_id_token']},playlist,{playlist_id}"
+    cache = subs_table.get_item(Key={'api_key': f'{cache_key},pages'}).get('Item')
     if cache and 'True' != query_params.get('skip_cache', ''):
         # check that the cache is fresh
         last_updated = dt_from_db(cache['last_updated'])
@@ -104,8 +93,8 @@ def lambda_handler(event, context):
                 # this should read the cached pages
                 items = fetch_playlist_items(
                     access_token,
-                    api_key=api_key,
                     cache=cache,
+                    cache_key=cache_key,
                     now_dt=now_dt,
                     playlist_id=playlist_id,
                     user=user,
@@ -132,8 +121,8 @@ def lambda_handler(event, context):
         per_page = query_params.get('per_page', 50)
         items = fetch_playlist_items(
             access_token,
-            api_key=api_key,
             cache=None,
+            cache_key=cache_key,
             max_pages=int(max_pages) if max_pages else None,
             now_dt=now_dt,
             per_page=int(per_page) if per_page else None,
@@ -166,19 +155,6 @@ def lambda_handler(event, context):
     )
 
 
-def response(status, arg_dict, /):
-    try:
-        return {
-            'statusCode': int(status),
-            'headers': {'Content-Type': 'application/json'},
-            'body': json.dumps(arg_dict),
-        }
-    except Exception as e:
-        msg = 'An exception occurred while generating the response'
-        log.exception(msg)
-        return response(500, {'msg': msg + '.', 'exc': str(e)})
-
-
 def sort_by_added_desc(items):
     # snippet.publishedAt is when the video was ADDED to the playlist, distinct
     # from contentDetails.videoPublishedAt (the video's original upload date).
@@ -187,11 +163,10 @@ def sort_by_added_desc(items):
     return sorted(items, key=lambda item: item.get('snippet', {}).get('publishedAt', ''), reverse=True)
 
 
-def fetch_playlist_items(token, *, user, api_key, playlist_id, cache=None, max_pages=None, now_dt=None, per_page=None):
+def fetch_playlist_items(token, *, user, cache_key, playlist_id, cache=None, max_pages=None, now_dt=None, per_page=None):
     if now_dt is None:
         now_dt = dt_now()
 
-    cache_key = f'{api_key},playlist,{playlist_id}'
     all_items = []
     page = 1
     if cache:
@@ -256,28 +231,19 @@ def fetch_playlist_items(token, *, user, api_key, playlist_id, cache=None, max_p
             except urllib.error.HTTPError as e:
                 if 404 == e.code:
                     return response(404, dict(error=f'Playlist not found: {playlist_id}'))
-                refresh_token = None
-                if 401 == e.code:
-                    refresh_token = token_decrypt(user.get('youtube_refresh_token'))
-                    if not refresh_token:
-                        return response(500, dict(error=NO_REFRESH_TOKEN_MSG))
-                    new_token = refresh_access_token(refresh_token, user=user, keys_table=keys_table, log=log)
-                    if new_token:
-                        return fetch_playlist_items(
-                            new_token,
-                            api_key=api_key,
-                            cache=None,
-                            max_pages=max_pages,
-                            now_dt=now_dt,
-                            per_page=per_page,
-                            playlist_id=playlist_id,
-                            user=user,
-                        )
-                    else:
-                        return response(403, dict(error=ACCESS_REVOKED_MSG))
-                elif 403 == e.code:
-                    return response(403, dict(error=ACCESS_DENIED_MSG))
-                raise
+                refreshed = handle_youtube_http_error(e, user=user, keys_table=keys_table, log=log)
+                if isinstance(refreshed, str):
+                    return fetch_playlist_items(
+                        refreshed,
+                        cache=None,
+                        cache_key=cache_key,
+                        max_pages=max_pages,
+                        now_dt=now_dt,
+                        per_page=per_page,
+                        playlist_id=playlist_id,
+                        user=user,
+                    )
+                return refreshed
         item_count = len(all_items)
         log.info(f"{item_count} playlist items grabbed from YouTube")
         return sort_by_added_desc(all_items)

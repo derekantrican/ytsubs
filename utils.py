@@ -19,6 +19,20 @@ urlsafe_b64_alphabet = frozenset(
     set(base64._b32alphabet.decode().lower())
 )
 
+NO_REFRESH_TOKEN_MSG = (
+    "The YouTube refresh token was not accessible. "
+    "Please visit https://ytsubs.app and sign in again."
+)
+ACCESS_REVOKED_MSG = (
+    "Access to YouTube was revoked. "
+    "Please visit https://ytsubs.app and sign in again."
+)
+ACCESS_DENIED_MSG = (
+    "Access to YouTube was denied. "
+    "Please visit https://ytsubs.app and sign in again, "
+    "ensuring you grant YouTube access."
+)
+
 
 def default_kms_key():
     return getenv('YTSUBS_KMS_KEY', 'alias/ytsubs-token-encrypt-key')
@@ -125,6 +139,25 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     elif integer:
         r = int(float(r))
     return r
+
+
+def handle_youtube_http_error(e, /, *, user, keys_table, log):
+    """
+    Handles a 401/403 from the YouTube API.
+    Returns a fresh access token (str) if a refresh succeeded and the caller
+    should retry, or a response dict (with statusCode) to return as-is.
+    """
+    if 401 == e.code:
+        refresh_token = token_decrypt(user.get('youtube_refresh_token'))
+        if not refresh_token:
+            return response(500, dict(error=NO_REFRESH_TOKEN_MSG))
+        new_token = refresh_access_token(refresh_token, user=user, keys_table=keys_table, log=log)
+        if new_token:
+            return new_token
+        return response(403, dict(error=ACCESS_REVOKED_MSG))
+    elif 403 == e.code:
+        return response(403, dict(error=ACCESS_DENIED_MSG))
+    raise e
 
 
 def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
