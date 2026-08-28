@@ -142,8 +142,8 @@ def lambda_handler(event, context):
                 FilterExpression="google_user_id_token = :u",
                 ExpressionAttributeValues={":u": google_user_id_token}
             )
-            first_item = response.get("Items", [{}])[0]
-            api_key = first_item.get('api_key') or None
+            items = response.get("Items", [])
+            api_key = items[0].get('api_key') if items else None
         except Exception as e:  # noqa: BLE001 - fall through to generating a new key on any lookup failure
             log.debug('keys table scan failed: %s', e)
 
