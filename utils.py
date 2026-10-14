@@ -7,6 +7,8 @@ import json
 import logging
 import math
 import os
+import urllib.parse
+import urllib.request
 
 import boto3
 
@@ -15,6 +17,20 @@ urlsafe_b64_alphabet = frozenset(
     set('0123456789_-') |
     set(base64._b32alphabet.decode().upper()) |
     set(base64._b32alphabet.decode().lower())
+)
+
+NO_REFRESH_TOKEN_MSG = (
+    "The YouTube refresh token was not accessible. "
+    "Please visit https://ytsubs.app and sign in again."
+)
+ACCESS_REVOKED_MSG = (
+    "Access to YouTube was revoked. "
+    "Please visit https://ytsubs.app and sign in again."
+)
+ACCESS_DENIED_MSG = (
+    "Access to YouTube was denied. "
+    "Please visit https://ytsubs.app and sign in again, "
+    "ensuring you grant YouTube access."
 )
 
 
@@ -125,10 +141,52 @@ def getenv(key, default=None, /, *, integer=False, string=True):
     return r
 
 
+def handle_youtube_http_error(e, /, *, user, keys_table, log):
+    """
+    Handles a 401/403 from the YouTube API.
+    Returns a fresh access token (str) if a refresh succeeded and the caller
+    should retry, or a response dict (with statusCode) to return as-is.
+    """
+    if 401 == e.code:
+        refresh_token = token_decrypt(user.get('youtube_refresh_token'))
+        if not refresh_token:
+            return response(500, dict(error=NO_REFRESH_TOKEN_MSG))
+        new_token = refresh_access_token(refresh_token, user=user, keys_table=keys_table, log=log)
+        if new_token:
+            return new_token
+        return response(403, dict(error=ACCESS_REVOKED_MSG))
+    elif 403 == e.code:
+        return response(403, dict(error=ACCESS_DENIED_MSG))
+    raise e
+
+
 def newer_than(arg_dt, /, *args, now_dt=None, **kwargs):
     if now_dt is None:
         now_dt = dt_now()
     return now_dt <= expire_after(arg_dt, *args, **kwargs)
+
+
+def refresh_access_token(refresh_token, *, user, keys_table, log):
+    token_url = "https://oauth2.googleapis.com/token"
+    data = urllib.parse.urlencode({
+        "client_id": EnvGoogle.client_id,
+        "client_secret": EnvGoogle.client_secret,
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token"
+    }).encode()
+
+    req = urllib.request.Request(token_url, data=data)
+    try:
+        with urllib.request.urlopen(req) as resp:
+            token_data = json.loads(resp.read().decode())
+            new_token = token_data.get("access_token")
+            if new_token:
+                user['youtube_access_token'] = token_encrypt(new_token)
+                keys_table.put_item(Item=user)
+                return new_token
+    except Exception:
+        log.exception('Failed to refresh token')
+    return None
 
 
 def response(status, arg_dict, /, *, cls=None, default=None):

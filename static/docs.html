@@ -57,11 +57,8 @@
             <td>Results are cached per user and refreshed at most once every <strong>12 hours</strong>. If cache age &lt; 12h, cached data is returned immediately.</td>
           </tr>
         </table>
-      </section>
 
-      <section>
-        <h2>Example</h2>
-        <div class="example">
+        <div class="example" style="margin-top:14px">
           <div>
             <h3 class="muted">cURL</h3>
             <pre class="code">curl https://ytsubs.app/subscriptions?api_key=YOUR_API_KEY</pre>
@@ -88,6 +85,117 @@
       </section>
 
       <section>
+        <h2>Endpoint — <code>/playlists</code></h2>
+        <div class="muted">Return a user's own playlists plus their "Liked videos" playlist (cached). Requires <code>api_key</code>.</div>
+
+        <table class="spec" aria-describedby="parameters">
+          <tr>
+            <th>HTTP Method</th>
+            <td><strong>GET</strong></td>
+          </tr>
+          <tr>
+            <th>Path</th>
+            <td><code>/playlists</code></td>
+          </tr>
+          <tr>
+            <th>Query Parameters</th>
+            <td>
+              <strong>api_key</strong> (required) — the API key assigned to the user<br>
+            </td>
+          </tr>
+          <tr>
+            <th>Authentication</th>
+            <td>API key validated against an internal users table</td>
+          </tr>
+          <tr>
+            <th>Caching</th>
+            <td>Results are cached per user and refreshed at most once every <strong>1 hour</strong>.</td>
+          </tr>
+        </table>
+
+        <div class="muted" style="margin-top:14px">
+          <strong>Not included: "Watch Later" and "History".</strong> These are not a documentation gap or a missing scope on our end — Google removed API access to both entirely:
+        </div>
+        <ul style="color:var(--muted);line-height:1.6">
+          <li><strong>Watch Later</strong> — deprecated by Google effective September 12, 2016. Requests for this playlist now return empty results for every API client, with no exceptions. See the <a href="https://developers.google.com/youtube/v3/revision_history" target="_blank">YouTube Data API revision history</a>, entries for August 11, 2016 and September 9, 2020.</li>
+          <li><strong>History</strong> — never exposed via the YouTube Data API at all; there has never been an endpoint for it.</li>
+        </ul>
+
+        <div class="example" style="margin-top:14px">
+          <div>
+            <h3 class="muted">cURL</h3>
+            <pre class="code">curl https://ytsubs.app/playlists?api_key=YOUR_API_KEY</pre>
+
+            <h3 class="muted">Response (200 OK)</h3>
+            <pre class="code">{
+  "lastRetrievalDate": "2025-07-03T22:12:00Z",
+  "playlists_count": 2,
+  "playlists": [
+    { "id": "LL...", "kind": "liked", "title": "Liked videos" },
+    { "id": "PL...", "kind": "mine", "title": "My Cool Playlist", "itemCount": 12 }
+  ]
+}</pre>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Endpoint — <code>/playlist</code></h2>
+        <div class="muted">Return the items in a specific playlist (cached), sorted by <strong>newest added first</strong> — i.e. the order each video was added to the playlist, not the video's original upload date. Requires <code>api_key</code> and <code>id</code>.</div>
+
+        <table class="spec" aria-describedby="parameters">
+          <tr>
+            <th>HTTP Method</th>
+            <td><strong>GET</strong></td>
+          </tr>
+          <tr>
+            <th>Path</th>
+            <td><code>/playlist</code></td>
+          </tr>
+          <tr>
+            <th>Query Parameters</th>
+            <td>
+              <strong>api_key</strong> (required) — the API key assigned to the user<br>
+              <strong>id</strong> (required) — a playlist id from the <code>/playlists</code> response<br>
+            </td>
+          </tr>
+          <tr>
+            <th>Authentication</th>
+            <td>API key validated against an internal users table</td>
+          </tr>
+          <tr>
+            <th>Caching</th>
+            <td>Results are cached per user/playlist and refreshed at most once every <strong>12 hours</strong>.</td>
+          </tr>
+        </table>
+
+        <div class="example" style="margin-top:14px">
+          <div>
+            <h3 class="muted">cURL</h3>
+            <pre class="code">curl https://ytsubs.app/playlist?api_key=YOUR_API_KEY&amp;id=PL...</pre>
+
+            <h3 class="muted">Response (200 OK)</h3>
+            <pre class="code">{
+  "lastRetrievalDate": "2025-07-03T22:12:00Z",
+  "playlistId": "PL...",
+  "items_count": 2,
+  "items": [
+    {
+      "id": "UExhQmM...",
+      "snippet": {
+        "publishedAt": "2025-06-01T00:00:00Z",
+        "title": "A video added recently"
+      },
+      "contentDetails": { "videoPublishedAt": "2019-03-02T00:00:00Z" }
+    },
+    ...
+  ]
+}</pre>
+          </div>
+        </div>
+      </section>
+
+      <section>
         <h2>Best Practices</h2>
         <ol style="color:var(--muted);line-height:1.5">
           <li>Never embed an API key in client-side code or public repos</li>
@@ -101,8 +209,10 @@
         <h2>Errors</h2>
         <p class="muted">All endpoints may return these errors:</p>
         <ul style="line-height:1.6">
+          <li><code>400</code> — Missing a required parameter (e.g. <code>id</code> for <code>/playlist</code>)</li>
           <li><code>401</code> — Missing api_key or YouTube token</li>
           <li><code>403</code> — YTSubs access to YouTube has been revoked</li>
+          <li><code>404</code> — Playlist not found (<code>/playlist</code> only)</li>
           <li><code>500</code> — Internal error (e.g., YouTube API, network problem)</li>
         </ul>
       </section>

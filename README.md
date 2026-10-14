@@ -31,10 +31,16 @@ graph TD
     GW -->|Route: / | LambdaStart[Lambda: oauth_start]
     GW -->|Route: /auth/callback | LambdaCallback[Lambda: oauth_callback]
     GW -->|Route: /subscriptions | LambdaFetch[Lambda: fetch_subscriptions]
+    GW -->|Route: /playlists | LambdaPlaylists[Lambda: fetch_playlists]
+    GW -->|Route: /playlist | LambdaPlaylist[Lambda: fetch_playlist]
 
     LambdaCallback --> DB[DynamoDB: ytsubs_api_keys]
     LambdaFetch --> DB
     LambdaFetch --> Cache[DynamoDB: ytsubs_subscriptions_cache]
+    LambdaPlaylists --> DB
+    LambdaPlaylists --> Cache
+    LambdaPlaylist --> DB
+    LambdaPlaylist --> Cache
 ```
 
 ## Repo Structure
@@ -42,6 +48,8 @@ graph TD
 ```
 ytsubs-lambdas/
 ├── fetch_subscriptions.py     # Lambda for /subscriptions
+├── fetch_playlists.py         # Lambda for /playlists
+├── fetch_playlist.py          # Lambda for /playlist
 ├── oauth_start.py             # Lambda for / (homepage)
 ├── oauth_callback.py          # Lambda for /auth/callback
 ├── static/                     # Static sources such as images & privacy policy
@@ -65,6 +73,42 @@ Returns:
 {
   "lastRetrievalDate": "2025-06-06T21:04:00Z",
   "subscriptions": [ ... ]
+}
+```
+
+### Get Playlists
+
+```bash
+curl "https://ytsubs.app/playlists?api_key=YOUR_API_KEY"
+````
+
+Returns the user's own playlists plus their "Liked videos" playlist:
+
+```json
+{
+  "lastRetrievalDate": "2025-06-06T21:04:00Z",
+  "playlists": [
+    { "id": "LL...", "kind": "liked", "title": "Liked videos" },
+    { "id": "PL...", "kind": "mine", "title": "My Cool Playlist", "itemCount": 12 }
+  ]
+}
+```
+
+> **Note:** "Watch Later" and "History" are not included. Google removed API access to both — this isn't a scope/permission issue, the [YouTube Data API itself no longer supports it](https://developers.google.com/youtube/v3/revision_history) (see the August 11, 2016 and September 9, 2020 entries). See [docs.html](static/docs.html) for details.
+
+### Get Playlist Items
+
+```bash
+curl "https://ytsubs.app/playlist?api_key=YOUR_API_KEY&id=PL..."
+````
+
+Returns that playlist's items, sorted by **newest added first** (when each video was added to the playlist, not its original upload date):
+
+```json
+{
+  "lastRetrievalDate": "2025-06-06T21:04:00Z",
+  "playlistId": "PL...",
+  "items": [ ... ]
 }
 ```
 
